@@ -3,8 +3,8 @@
     {
       "type": "bitmap",
       "file": "guiok:font/logo.png",
-      "ascent": 44,
-      "height": 48,
+      "ascent": 20,
+      "height": 22,
       "chars": [
         "\ue001"
       ]
