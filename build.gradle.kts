@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.0.2"
+version = "1.0.3"
 
 val paperApiVersion = providers.gradleProperty("paperApiVersion")
     .orElse("26.1.2.build.74-stable")
@@ -58,9 +58,80 @@ fun sha1(file: File): String {
     return digest.digest().joinToString("") { "%02x".format(it) }
 }
 
+fun prepareBitmap(
+    sourceFile: File,
+    targetFile: File,
+    maxWidth: Int,
+    maxHeight: Int,
+    padding: Int
+): BufferedImage {
+    val source = ImageIO.read(sourceFile)
+        ?: throw GradleException("${sourceFile.invariantSeparatorsPath} is not a readable PNG")
+
+    var minX = source.width
+    var minY = source.height
+    var maxX = -1
+    var maxY = -1
+    for (y in 0 until source.height) {
+        for (x in 0 until source.width) {
+            if ((source.getRGB(x, y) ushr 24) > 8) {
+                minX = minOf(minX, x)
+                minY = minOf(minY, y)
+                maxX = maxOf(maxX, x)
+                maxY = maxOf(maxY, y)
+            }
+        }
+    }
+    if (maxX < minX || maxY < minY) {
+        throw GradleException("${sourceFile.invariantSeparatorsPath} is fully transparent")
+    }
+
+    val cropWidth = maxX - minX + 1
+    val cropHeight = maxY - minY + 1
+    val scale = minOf(
+        1.0,
+        (maxWidth - padding * 2).toDouble() / cropWidth,
+        (maxHeight - padding * 2).toDouble() / cropHeight)
+    val scaledWidth = maxOf(1, (cropWidth * scale).toInt())
+    val scaledHeight = maxOf(1, (cropHeight * scale).toInt())
+
+    val result = BufferedImage(
+        scaledWidth + padding * 2,
+        scaledHeight + padding * 2,
+        BufferedImage.TYPE_INT_ARGB)
+    val graphics = result.createGraphics()
+    try {
+        graphics.setRenderingHint(
+            RenderingHints.KEY_INTERPOLATION,
+            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
+        graphics.drawImage(
+            source,
+            padding,
+            padding,
+            padding + scaledWidth,
+            padding + scaledHeight,
+            minX,
+            minY,
+            maxX + 1,
+            maxY + 1,
+            null)
+    } finally {
+        graphics.dispose()
+    }
+
+    targetFile.parentFile.mkdirs()
+    if (!ImageIO.write(result, "png", targetFile)) {
+        throw GradleException("No PNG writer is available")
+    }
+    return result
+}
+
 val logoSource = layout.projectDirectory.file("resourcepack/logo.png")
 val preparedLogo = layout.buildDirectory.file(
     "generated-resourcepack/assets/guiok/textures/font/logo.png")
+val coinSource = layout.projectDirectory.file("resourcepack/coin.png")
+val preparedCoin = layout.buildDirectory.file(
+    "generated-resourcepack/assets/guiok/textures/font/coin.png")
 
 val prepareLogo by tasks.registering {
     val maxWidth = 240
@@ -70,76 +141,35 @@ val prepareLogo by tasks.registering {
     inputs.property("maxHeight", maxHeight)
     outputs.file(preparedLogo)
     doLast {
-        val source = ImageIO.read(logoSource.asFile)
-            ?: throw GradleException("resourcepack/logo.png is not a readable PNG")
-
-        var minX = source.width
-        var minY = source.height
-        var maxX = -1
-        var maxY = -1
-        for (y in 0 until source.height) {
-            for (x in 0 until source.width) {
-                if ((source.getRGB(x, y) ushr 24) > 8) {
-                    minX = minOf(minX, x)
-                    minY = minOf(minY, y)
-                    maxX = maxOf(maxX, x)
-                    maxY = maxOf(maxY, y)
-                }
-            }
-        }
-        if (maxX < minX || maxY < minY) {
-            throw GradleException("resourcepack/logo.png is fully transparent")
-        }
-
-        val cropWidth = maxX - minX + 1
-        val cropHeight = maxY - minY + 1
-        val padding = 2
-        val scale = minOf(
-            1.0,
-            (maxWidth - padding * 2).toDouble() / cropWidth,
-            (maxHeight - padding * 2).toDouble() / cropHeight)
-        val scaledWidth = maxOf(1, (cropWidth * scale).toInt())
-        val scaledHeight = maxOf(1, (cropHeight * scale).toInt())
-
-        val result = BufferedImage(
-            scaledWidth + padding * 2,
-            scaledHeight + padding * 2,
-            BufferedImage.TYPE_INT_ARGB)
-        val graphics = result.createGraphics()
-        try {
-            graphics.setRenderingHint(
-                RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
-            graphics.drawImage(
-                source,
-                padding,
-                padding,
-                padding + scaledWidth,
-                padding + scaledHeight,
-                minX,
-                minY,
-                maxX + 1,
-                maxY + 1,
-                null)
-        } finally {
-            graphics.dispose()
-        }
-
-        val target = preparedLogo.get().asFile
-        target.parentFile.mkdirs()
-        if (!ImageIO.write(result, "png", target)) {
-            throw GradleException("No PNG writer is available")
-        }
+        val result = prepareBitmap(
+            logoSource.asFile, preparedLogo.get().asFile, maxWidth, maxHeight, 2)
         logger.lifecycle("Prepared HUD logo: ${result.width}x${result.height}")
     }
 }
 
+val prepareCoin by tasks.registering {
+    val maxWidth = 12
+    val maxHeight = 12
+    inputs.file(coinSource)
+    inputs.property("maxWidth", maxWidth)
+    inputs.property("maxHeight", maxHeight)
+    outputs.file(preparedCoin)
+    doLast {
+        val result = prepareBitmap(
+            coinSource.asFile, preparedCoin.get().asFile, maxWidth, maxHeight, 1)
+        logger.lifecycle("Prepared HUD coin: ${result.width}x${result.height}")
+    }
+}
+
 val resourcePackZip by tasks.registering(Zip::class) {
-    dependsOn(prepareLogo)
+    dependsOn(prepareLogo, prepareCoin)
     archiveFileName.set("GuiOkResourcePack.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     from(layout.projectDirectory.dir("resourcepack/pack"))
     from(preparedLogo) {
+        into("assets/guiok/textures/font")
+    }
+    from(preparedCoin) {
         into("assets/guiok/textures/font")
     }
     isReproducibleFileOrder = true
@@ -184,7 +214,7 @@ sourceSets.main {
 
 val validateResourcePack by tasks.registering {
     group = "verification"
-    description = "Validates the generated resource-pack structure and logo bounds."
+    description = "Validates the generated resource-pack structure and glyph bounds."
     dependsOn(resourcePackZip)
     inputs.file(resourcePackZip.flatMap { it.archiveFile })
     doLast {
@@ -193,15 +223,18 @@ val validateResourcePack by tasks.registering {
             val required = listOf(
                 "pack.mcmeta",
                 "assets/guiok/font/hud.json",
-                "assets/guiok/textures/font/logo.png")
+                "assets/guiok/textures/font/logo.png",
+                "assets/guiok/textures/font/coin.png")
             val missing = required.filter { zip.getEntry(it) == null }
             if (missing.isNotEmpty()) {
                 throw GradleException("Resource pack misses: ${missing.joinToString()}")
             }
-            val image = ImageIO.read(zip.getInputStream(zip.getEntry(required.last())))
-                ?: throw GradleException("Generated logo is not a readable PNG")
-            if (image.width > 256 || image.height > 256) {
-                throw GradleException("Generated logo exceeds Minecraft's 256x256 glyph limit")
+            for (path in required.filter { it.endsWith(".png") }) {
+                val image = ImageIO.read(zip.getInputStream(zip.getEntry(path)))
+                    ?: throw GradleException("Generated glyph $path is not a readable PNG")
+                if (image.width > 256 || image.height > 256) {
+                    throw GradleException("Generated glyph $path exceeds Minecraft's 256x256 limit")
+                }
             }
         }
     }

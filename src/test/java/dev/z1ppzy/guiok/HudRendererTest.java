@@ -31,4 +31,28 @@ class HudRendererTest {
 
         assertEquals("Alex | oneblock | 1.5K | 18", PLAIN.serialize(result));
     }
+
+    @Test
+    void rendersPackIconAfterValueOnlyWhenPackIsApplied() {
+        HudContext context = new HudContext(
+                "Alex",
+                Component.text("Alex"),
+                "prison",
+                "1",
+                "100",
+                "42",
+                "1.5K",
+                "10",
+                "64",
+                "-3");
+        HudRenderer renderer = new HudRenderer();
+
+        Component packed = renderer.render(
+                "<balance><icon:coin>", context, identifier -> Component.empty(), true);
+        Component fallback = renderer.render(
+                "<balance><icon:coin>", context, identifier -> Component.empty(), false);
+
+        assertEquals("1.5K \ue002", PLAIN.serialize(packed));
+        assertEquals("1.5K", PLAIN.serialize(fallback));
+    }
 }

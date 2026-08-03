@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+- Added a compact gold coin glyph for Vault balances.
+- Replaced the labelled balance row with `<balance><icon:coin>`.
+- Pack icons now disappear cleanly when the resource pack is unavailable.
+
 ## 1.0.2
 
 - Replaced the generic `GUI OK` demo artwork with a compact `PRISON` mode logo.

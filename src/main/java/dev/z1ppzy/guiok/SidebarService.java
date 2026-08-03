@@ -70,7 +70,10 @@ public final class SidebarService {
         HudContext context = contextFactory.create(player);
         String titleTemplate = packedTitle ? settings.packedTitle() : settings.fallbackTitle();
         Component title = renderer.render(
-                titleTemplate, context, identifier -> placeholders.resolve(player, identifier));
+                titleTemplate,
+                context,
+                identifier -> placeholders.resolve(player, identifier),
+                packedTitle);
         Objective objective = board.registerNewObjective("guiok", Criteria.DUMMY, title);
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
         objective.numberFormat(NumberFormat.blank());
@@ -166,13 +169,17 @@ public final class SidebarService {
                 ? settings.packedTitle()
                 : settings.fallbackTitle();
         session.objective().displayName(renderer.render(
-                titleTemplate, context, identifier -> placeholders.resolve(player, identifier)));
+                titleTemplate,
+                context,
+                identifier -> placeholders.resolve(player, identifier),
+                session.packedTitle()));
         int count = Math.min(session.teams().size(), settings.lines().size());
         for (int index = 0; index < count; index++) {
             Component line = renderer.render(
                     settings.lines().get(index),
                     context,
-                    identifier -> placeholders.resolve(player, identifier));
+                    identifier -> placeholders.resolve(player, identifier),
+                    session.packedTitle());
             session.teams().get(index).prefix(line);
         }
     }

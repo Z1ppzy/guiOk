@@ -23,7 +23,7 @@ sidebar:
     - ""
     - "<gray>Игрок:</gray> <white><player></white>"
     - "<gray>Мир:</gray> <white><world></white>"
-    - "<gray>Баланс:</gray> <green><balance></green>"
+    - "<green><balance></green><icon:coin>"
     - "<gray>Онлайн:</gray> <white><online>/<max_online></white>"
     # Пример PlaceholderAPI. Идентификатор зависит от вашего OneBlock-плагина:
     # - "<gray>Уровень острова:</gray> <white><papi:aoneblock_island_level></white>"

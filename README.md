@@ -37,19 +37,20 @@ Minecraft 26.1–26.2. Font-pack объявляет диапазон resource-pa
 
 ## Как заменить картинку
 
-Замените единственный файл:
+Заменяемые исходники:
 
 ```text
 resourcepack/logo.png
+resourcepack/coin.png
 ```
 
 Требования:
 
 - PNG с прозрачным фоном;
 - оригинальный логотип без чужих товарных знаков;
-- желательно горизонтальный pixel-art;
-- исходник может быть большим: Gradle автоматически обрежет прозрачные поля и
-  уменьшит его nearest-neighbor до безопасного размера не больше `240×72`.
+- для логотипа желателен горизонтальный pixel-art, для монетки — квадратный;
+- исходники могут быть большими: Gradle автоматически обрежет прозрачные поля и
+  уменьшит nearest-neighbor логотип до `240×72`, а монетку — до `12×12`.
 
 Затем выполните:
 
@@ -83,6 +84,7 @@ SHA-1 собранного ZIP автоматически записываетс
 | `<online>` / `<max_online>` | онлайн |
 | `<ping>` | ping |
 | `<balance>` | Vault-баланс или `—` |
+| `<icon:coin>` | пробел и монетка после значения; без загруженного пака исчезает целиком |
 | `<x>` / `<y>` / `<z>` | координаты |
 | `<papi:identifier>` | `%identifier%` из PlaceholderAPI |
 
@@ -95,7 +97,7 @@ sidebar:
     - "<gray>Игрок:</gray> <white><player></white>"
     - "<gray>Остров:</gray> <white><papi:aoneblock_island_name></white>"
     - "<gray>Уровень:</gray> <green><papi:aoneblock_island_level></green>"
-    - "<gray>Баланс:</gray> <green><balance></green>"
+    - "<green><balance></green><icon:coin>"
 ```
 
 Если PlaceholderAPI или expansion отсутствуют, тег выводит `—`, не ломая весь

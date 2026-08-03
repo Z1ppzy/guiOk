@@ -1,25 +1,53 @@
 package dev.z1ppzy.guiok;
 
+import java.util.Map;
 import java.util.function.Function;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 public final class HudRenderer {
+    private static final Key HUD_FONT = Key.key("guiok", "hud");
+    private static final Map<String, String> PACK_ICONS = Map.of("coin", "\ue002");
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     public Component render(
             String template,
             HudContext hud,
             Function<String, Component> externalPlaceholder) {
+        return render(template, hud, externalPlaceholder, false);
+    }
+
+    public Component render(
+            String template,
+            HudContext hud,
+            Function<String, Component> externalPlaceholder,
+            boolean packApplied) {
         TagResolver papi = TagResolver.resolver("papi", (arguments, context) -> {
             String identifier = arguments.popOr("Expected <papi:identifier>").value();
             if (arguments.hasNext()) {
                 throw context.newException("The <papi> tag accepts exactly one identifier", arguments);
             }
             return Tag.inserting(externalPlaceholder.apply(identifier));
+        });
+        TagResolver icon = TagResolver.resolver("icon", (arguments, context) -> {
+            String identifier = arguments.popOr("Expected <icon:name>").value();
+            if (arguments.hasNext()) {
+                throw context.newException("The <icon> tag accepts exactly one name", arguments);
+            }
+            String glyph = PACK_ICONS.get(identifier);
+            if (glyph == null) {
+                throw context.newException("Unknown GuiOk icon: " + identifier);
+            }
+            if (!packApplied) {
+                return Tag.inserting(Component.empty());
+            }
+            return Tag.inserting(Component.text(" ").append(
+                    Component.text(glyph, NamedTextColor.WHITE).font(HUD_FONT)));
         });
         return miniMessage.deserialize(
                 template,
@@ -33,7 +61,8 @@ public final class HudRenderer {
                 Placeholder.unparsed("x", hud.x()),
                 Placeholder.unparsed("y", hud.y()),
                 Placeholder.unparsed("z", hud.z()),
-                papi);
+                papi,
+                icon);
     }
 
     public Component plain(String miniMessageText) {
