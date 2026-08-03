@@ -32,7 +32,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Verify plugin and resource pack
-        run: bash ./gradlew clean check jar resourcePackZip --stacktrace --no-daemon
+        run: bash ./gradlew clean check jar apiJar resourcePackZip --stacktrace --no-daemon
 
       - name: Publish rolling latest assets
         if: >-
@@ -42,6 +42,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp build/libs/GuiOk.jar GuiOk.jar
+          cp build/libs/GuiOk-api.jar GuiOk-api.jar
           cp build/distributions/GuiOkResourcePack.zip GuiOkResourcePack.zip
           if gh release view latest >/dev/null 2>&1; then
             gh release edit latest \
@@ -52,4 +53,4 @@ jobs:
               --title "Latest verified build" \
               --notes "Rolling build from commit $GITHUB_SHA. Assets are replaced only after all checks pass."
           fi
-          gh release upload latest GuiOk.jar GuiOkResourcePack.zip --clobber
+          gh release upload latest GuiOk.jar GuiOk-api.jar GuiOkResourcePack.zip --clobber

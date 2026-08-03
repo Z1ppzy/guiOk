@@ -1,0 +1,12 @@
+# Build-time custom item catalog. IDs, model paths and texture paths must be
+# lowercase namespaced resource locations. PNG sources live under
+# resourcepack/items/<namespace>/<texture-path>.png.
+guiok:coin:
+  material: GOLD_NUGGET
+  name: "<gold>Монета"
+  lore:
+    - "<gray>Пример предмета GuiOk API"
+  model: guiok:coin
+  texture: guiok:coin
+  parent: minecraft:item/generated
+  glint: false

@@ -1,7 +1,7 @@
 # guiOk
 
-Отдельный Paper-плагин для красивого sidebar: обычные динамические строки плюс
-PNG-логотип, который клиент рисует как кастомный символ шрифта из ресурспака.
+Paper-плагин для единого оформления режима: динамический sidebar, PNG-глифы и
+namespaced custom items с автоматически собираемыми текстурами и публичным API.
 Моды игрокам не нужны.
 
 ## Что получается
@@ -11,9 +11,11 @@ PNG-логотип, который клиент рисует как кастом
 - текстовый fallback, если игрок отклонил или не загрузил пак;
 - строки из MiniMessage, встроенных значений и PlaceholderAPI;
 - баланс через Vault, если Vault и economy provider установлены;
+- custom items через современный `item_model`, без ручного CustomModelData;
+- API для Prison/OneBlock-плагинов через Bukkit ServicesManager;
 - сохранённый `/guiok toggle` через PDC игрока;
 - точная версия, git-коммит и SHA-1 пака через `/guiok version`;
-- `GuiOk.jar` и `GuiOkResourcePack.zip` автоматически обновляются в rolling
+- `GuiOk.jar`, `GuiOk-api.jar` и `GuiOkResourcePack.zip` автоматически обновляются в rolling
   GitHub Release `latest` только после успешных тестов.
 
 Поддерживаемый стек: Java 25, Paper API `26.1.2.build.74-stable`, клиенты
@@ -30,10 +32,8 @@ Minecraft 26.1–26.2. Font-pack объявляет диапазон resource-pa
    оставьте `sidebar.replace-existing-scoreboard: true`, понимая, что владеть
    vanilla sidebar одновременно может только один плагин.
 
-> Репозиторий сейчас приватный. GitHub Release из приватного репозитория не
-> является публичным URL для Minecraft-клиентов. Значение по умолчанию начнёт
-> работать после публикации репозитория; до этого разместите ZIP на публичном
-> CDN/веб-сервере и замените `resource-pack.url`.
+Публичный rolling release репозитория уже подходит как прямой URL пака. Для
+приватного форка потребуется собственный публичный CDN/веб-сервер.
 
 ## Как заменить картинку
 
@@ -55,13 +55,14 @@ resourcepack/coin.png
 Затем выполните:
 
 ```powershell
-.\gradlew.bat clean check jar resourcePackZip --no-daemon
+.\gradlew.bat clean check jar apiJar resourcePackZip --no-daemon
 ```
 
 Результат:
 
 ```text
 build/libs/GuiOk.jar
+build/libs/GuiOk-api.jar
 build/distributions/GuiOkResourcePack.zip
 ```
 
@@ -103,6 +104,38 @@ sidebar:
 Если PlaceholderAPI или expansion отсутствуют, тег выводит `—`, не ломая весь
 sidebar. Допускается максимум 15 строк — это ограничение vanilla sidebar.
 
+## Кастомные предметы и API
+
+Чтобы добавить простую 2D-текстуру предмета:
+
+1. Положите PNG в `resourcepack/items/<namespace>/<path>.png`.
+2. Добавьте предмет в `resourcepack/items.yml`.
+3. Соберите и опубликуйте новый JAR/ZIP. Gradle сам создаст item definition,
+   model JSON и скопирует текстуру в правильные каталоги пака.
+
+```yaml
+prison:token:
+  material: GOLD_NUGGET
+  name: "<gold>Тюремный жетон"
+  lore:
+    - "<gray>Валюта Prison"
+  texture: prison:currency/token
+  parent: minecraft:item/generated
+  glint: false
+```
+
+Исходный PNG для примера выше:
+`resourcepack/items/prison/currency/token.png`. Для инструмента используйте
+`parent: minecraft:item/handheld`. ID, model и texture всегда пишутся в нижнем
+регистре; абсолютные пути и `..` отклоняются сборкой.
+
+На сервере `items.yml` экспортируется в `plugins/GuiOk/items.yml`. Изменения
+имени, lore, материала и model key применяются через `/guiok reload`. Новая PNG
+или новый model JSON требуют новой сборки ресурспака и `/guiok resend`.
+
+Полный контракт подключения другого плагина и Java-примеры находятся в
+[docs/API.md](docs/API.md).
+
 ## Ресурспак
 
 - `replace-existing-packs: false` наслаивает GuiOk поверх уже отправленных
@@ -122,7 +155,9 @@ sidebar. Допускается максимум 15 строк — это огр
 | `/guiok resend` | повторно отправить пак | `guiok.use` |
 | `/guiok version` | JAR, git-коммит, дата, Paper API, SHA-1 | `guiok.use` |
 | `/guiok status` | pack state, sidebar, PAPI и Vault | `guiok.use` |
-| `/guiok reload` | перечитать и проверить config | `guiok.admin` |
+| `/guiok items` | список зарегистрированных item ID | `guiok.admin` |
+| `/guiok give <игрок> <id> [количество]` | выдать кастомный предмет | `guiok.admin` |
+| `/guiok reload` | атомарно перечитать `config.yml` и `items.yml` | `guiok.admin` |
 
 Невалидная конфигурация не подменяется молча. При старте плагин отключается с
 ясной причиной; при `/guiok reload` старая рабочая конфигурация остаётся активна.
@@ -143,12 +178,12 @@ sidebar. Допускается максимум 15 строк — это огр
 ## Локальная разработка
 
 ```powershell
-.\gradlew.bat clean check jar resourcePackZip --no-daemon
+.\gradlew.bat clean check jar apiJar resourcePackZip --no-daemon
 .\gradlew.bat runServer
 ```
 
 CI выполняет ту же проверку на каждом push и pull request. Pull request только
-проверяется; успешный push в default branch заменяет два ассета релиза `latest`.
+проверяется; успешный push в default branch заменяет три ассета релиза `latest`.
 
 ## Лицензия
 

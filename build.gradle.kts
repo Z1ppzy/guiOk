@@ -3,8 +3,11 @@ import java.awt.image.BufferedImage
 import java.security.MessageDigest
 import java.util.zip.ZipFile
 import javax.imageio.ImageIO
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.GradleException
+import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     java
@@ -13,7 +16,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.0.4"
+version = "1.1.0"
 
 val paperApiVersion = providers.gradleProperty("paperApiVersion")
     .orElse("26.1.2.build.74-stable")
@@ -132,6 +135,9 @@ val preparedLogo = layout.buildDirectory.file(
 val coinSource = layout.projectDirectory.file("resourcepack/coin.png")
 val preparedCoin = layout.buildDirectory.file(
     "generated-resourcepack/assets/guiok/textures/font/coin.png")
+val itemConfigSource = layout.projectDirectory.file("resourcepack/items.yml")
+val itemTextureSources = layout.projectDirectory.dir("resourcepack/items")
+val compiledItemPack = layout.buildDirectory.dir("generated-item-pack")
 
 val prepareLogo by tasks.registering {
     val maxWidth = 240
@@ -161,10 +167,29 @@ val prepareCoin by tasks.registering {
     }
 }
 
+val compileItemPack by tasks.registering(JavaExec::class) {
+    group = "build"
+    description = "Compiles items.yml and item PNGs into modern resource-pack models."
+    dependsOn(tasks.named("classes"))
+    inputs.file(itemConfigSource)
+    inputs.dir(itemTextureSources)
+    outputs.dir(compiledItemPack)
+    classpath = sourceSets.main.get().output + configurations.compileClasspath.get()
+    mainClass.set("dev.z1ppzy.guiok.items.ResourcePackItemCompiler")
+    args(
+        itemConfigSource.asFile.absolutePath,
+        itemTextureSources.asFile.absolutePath,
+        compiledItemPack.get().asFile.absolutePath)
+    doFirst {
+        delete(compiledItemPack)
+    }
+}
+
 val resourcePackZip by tasks.registering(Zip::class) {
-    dependsOn(prepareLogo, prepareCoin)
+    dependsOn(prepareLogo, prepareCoin, compileItemPack)
     archiveFileName.set("GuiOkResourcePack.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+    duplicatesStrategy = DuplicatesStrategy.FAIL
     from(layout.projectDirectory.dir("resourcepack/pack"))
     from(preparedLogo) {
         into("assets/guiok/textures/font")
@@ -172,6 +197,7 @@ val resourcePackZip by tasks.registering(Zip::class) {
     from(preparedCoin) {
         into("assets/guiok/textures/font")
     }
+    from(compiledItemPack)
     isReproducibleFileOrder = true
     isPreserveFileTimestamps = false
 }
@@ -184,6 +210,24 @@ val buildCommitDate = gitOutput("git", "show", "-s", "--format=%cI", "HEAD")
 
 val generatedBuildInfo = layout.buildDirectory.file("generated-resources/guiok-build.properties")
 val pluginVersion = project.version.toString()
+
+val apiJar by tasks.registering(Jar::class) {
+    group = "build"
+    description = "Builds the compileOnly API artifact for dependent plugins."
+    dependsOn(tasks.named("classes"))
+    archiveFileName.set("GuiOk-api.jar")
+    from(sourceSets.main.get().output) {
+        include("dev/z1ppzy/guiok/api/**")
+    }
+    manifest {
+        attributes(
+            "Implementation-Title" to "GuiOk API",
+            "Implementation-Version" to pluginVersion,
+            "GuiOk-API-Version" to "1")
+    }
+    isReproducibleFileOrder = true
+    isPreserveFileTimestamps = false
+}
 
 val generateBuildInfo by tasks.registering {
     dependsOn(resourcePackZip)
@@ -206,10 +250,6 @@ val generateBuildInfo by tasks.registering {
             ).joinToString(System.lineSeparator(), postfix = System.lineSeparator()),
             Charsets.UTF_8)
     }
-}
-
-sourceSets.main {
-    resources.srcDir(layout.buildDirectory.dir("generated-resources"))
 }
 
 val validateResourcePack by tasks.registering {
@@ -240,6 +280,33 @@ val validateResourcePack by tasks.registering {
     }
 }
 
+val validateApiJar by tasks.registering {
+    group = "verification"
+    description = "Ensures the public API artifact contains no implementation classes."
+    dependsOn(apiJar)
+    inputs.file(apiJar.flatMap { it.archiveFile })
+    doLast {
+        ZipFile(apiJar.get().archiveFile.get().asFile).use { zip ->
+            val required = listOf(
+                "dev/z1ppzy/guiok/api/GuiOkApi.class",
+                "dev/z1ppzy/guiok/api/GuiOkItemDefinition.class",
+                "dev/z1ppzy/guiok/api/event/GuiOkItemsReloadedEvent.class")
+            val missing = required.filter { zip.getEntry(it) == null }
+            if (missing.isNotEmpty()) {
+                throw GradleException("API JAR misses: ${missing.joinToString()}")
+            }
+            val leaked = zip.entries().asSequence()
+                .map { it.name }
+                .filter { it.endsWith(".class") }
+                .filterNot { it.startsWith("dev/z1ppzy/guiok/api/") }
+                .toList()
+            if (leaked.isNotEmpty()) {
+                throw GradleException("API JAR leaks implementation classes: ${leaked.joinToString()}")
+            }
+        }
+    }
+}
+
 tasks {
     compileJava {
         options.encoding = "UTF-8"
@@ -247,8 +314,10 @@ tasks {
         options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
     }
     processResources {
-        dependsOn(generateBuildInfo)
         filteringCharset = "UTF-8"
+        from(itemConfigSource) {
+            rename { "items.yml" }
+        }
         filesMatching("plugin.yml") {
             expand("version" to pluginVersion)
         }
@@ -265,11 +334,18 @@ tasks {
         }
     }
     check {
-        dependsOn(validateResourcePack)
+        dependsOn(validateResourcePack, validateApiJar)
+    }
+    assemble {
+        dependsOn(apiJar)
     }
     jar {
-        dependsOn(resourcePackZip)
+        dependsOn(resourcePackZip, generateBuildInfo)
         archiveFileName.set("GuiOk.jar")
+        exclude(
+            "dev/z1ppzy/guiok/items/ResourcePackItemCompiler.class",
+            "dev/z1ppzy/guiok/items/PackCompilationResult.class")
+        from(generatedBuildInfo)
         from(resourcePackZip.flatMap { it.archiveFile }) {
             into("embedded")
             rename { "GuiOkResourcePack.zip" }

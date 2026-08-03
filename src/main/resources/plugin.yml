@@ -1,14 +1,14 @@
 name: GuiOk
 version: '${version}'
 main: dev.z1ppzy.guiok.GuiOkPlugin
-description: Custom resource-pack logo and configurable per-player sidebar for Paper
+description: Resource-pack HUD and namespaced custom item API for Paper
 authors: [Z1ppzy]
 api-version: '26.1.2'
 softdepend: [PlaceholderAPI, Vault]
 commands:
   guiok:
-    description: GuiOk sidebar, diagnostics and resource-pack controls
-    usage: /guiok [help|toggle|resend|version|status|reload]
+    description: GuiOk HUD, custom items, diagnostics and resource-pack controls
+    usage: /guiok [help|toggle|resend|version|status|items|give|reload]
     aliases: [hud]
     permission: guiok.use
 permissions:

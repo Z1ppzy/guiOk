@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.0
+
+- Added lowercase namespaced custom items from `resourcepack/items.yml`.
+- Added build-time generation of modern item definitions, models and textures.
+- Added the Bukkit ServicesManager `GuiOkApi`, immutable definitions, PDC item
+  identity and an item-catalog reload event.
+- Added `/guiok items`, `/guiok give`, item diagnostics and tab completion.
+- Added a standalone `GuiOk-api.jar` rolling-release asset for dependent plugins.
+- Added strict path, material, MiniMessage and PNG validation before publication.
+- Reduced scoreboard packet churn by skipping unchanged titles and lines.
+
 ## 1.0.4
 
 - Redrew the Vault coin as a hand-pixeled micro-sprite with a dark outline,

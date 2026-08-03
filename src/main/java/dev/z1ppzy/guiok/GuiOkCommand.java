@@ -2,13 +2,16 @@ package dev.z1ppzy.guiok;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +19,7 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "toggle", "resend", "version", "status");
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("help", "toggle", "resend", "version", "status", "reload");
+            List.of("help", "toggle", "resend", "version", "status", "items", "give", "reload");
 
     private final GuiOkPlugin plugin;
 
@@ -37,6 +40,8 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
             case "resend", "pack" -> resend(sender);
             case "version" -> version(sender);
             case "status" -> status(sender);
+            case "items" -> items(sender);
+            case "give" -> give(sender, args);
             case "reload" -> reload(sender);
             default -> {
                 sender.sendMessage(plugin.message("<red>Неизвестная команда.</red> <gray>/guiok help</gray>"));
@@ -51,14 +56,35 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
             @NotNull Command command,
             @NotNull String alias,
             @NotNull String[] args) {
-        if (args.length != 1) {
+        if (args.length == 1) {
+            String prefix = args[0].toLowerCase(Locale.ROOT);
+            List<String> source = sender.hasPermission("guiok.admin")
+                    ? ADMIN_SUBCOMMANDS
+                    : PLAYER_SUBCOMMANDS;
+            return source.stream().filter(value -> value.startsWith(prefix)).toList();
+        }
+        if (!sender.hasPermission("guiok.admin") || !args[0].equalsIgnoreCase("give")) {
             return List.of();
         }
-        String prefix = args[0].toLowerCase(Locale.ROOT);
-        List<String> source = sender.hasPermission("guiok.admin")
-                ? ADMIN_SUBCOMMANDS
-                : PLAYER_SUBCOMMANDS;
-        return source.stream().filter(value -> value.startsWith(prefix)).toList();
+        String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
+        if (args.length == 2) {
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix))
+                    .sorted()
+                    .toList();
+        }
+        if (args.length == 3) {
+            return plugin.items().itemIds().stream()
+                    .filter(id -> id.startsWith(prefix))
+                    .toList();
+        }
+        if (args.length == 4) {
+            return List.of("1", "16", "64").stream()
+                    .filter(amount -> amount.startsWith(prefix))
+                    .toList();
+        }
+        return List.of();
     }
 
     private boolean help(CommandSender sender) {
@@ -67,7 +93,9 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(plugin.message("<white>/guiok version</white> <gray>— версия JAR и git-коммит</gray>"));
         sender.sendMessage(plugin.message("<white>/guiok status</white> <gray>— состояние HUD и ресурспака</gray>"));
         if (sender.hasPermission("guiok.admin")) {
-            sender.sendMessage(plugin.message("<white>/guiok reload</white> <gray>— безопасно перечитать config.yml</gray>"));
+            sender.sendMessage(plugin.message("<white>/guiok items</white> <gray>— список item API</gray>"));
+            sender.sendMessage(plugin.message("<white>/guiok give <игрок> <id> [количество]</white> <gray>— выдать кастомный предмет</gray>"));
+            sender.sendMessage(plugin.message("<white>/guiok reload</white> <gray>— безопасно перечитать config.yml и items.yml</gray>"));
         }
         return true;
     }
@@ -121,10 +149,76 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
                     + enabled(plugin.sidebar().visible(player))));
         }
         if (sender.hasPermission("guiok.admin")) {
+            sender.sendMessage(plugin.message("<white>Item API:</white> <green>v"
+                    + plugin.items().apiVersion() + "</green> <gray>("
+                    + plugin.items().itemIds().size() + " предметов)</gray>"));
             sender.sendMessage(plugin.message("<white>URL:</white> <gray>"
                     + plugin.settings().resourcePack().url() + "</gray>"));
             sender.sendMessage(plugin.message("<white>Pack ID:</white> <gray>"
                     + plugin.settings().resourcePack().id() + "</gray>"));
+        }
+        return true;
+    }
+
+    private boolean items(CommandSender sender) {
+        if (!sender.hasPermission("guiok.admin")) {
+            sender.sendMessage(plugin.configuredMessage(plugin.settings().messages().noPermission()));
+            return true;
+        }
+        List<String> ids = plugin.items().itemIds().stream().sorted().toList();
+        sender.sendMessage(plugin.message("<white>GuiOk items:</white> <green>" + ids.size() + "</green>"));
+        for (int index = 0; index < ids.size(); index += 10) {
+            int end = Math.min(index + 10, ids.size());
+            sender.sendMessage(plugin.message(
+                    "<gray>" + String.join(", ", ids.subList(index, end)) + "</gray>"));
+        }
+        return true;
+    }
+
+    private boolean give(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("guiok.admin")) {
+            sender.sendMessage(plugin.configuredMessage(plugin.settings().messages().noPermission()));
+            return true;
+        }
+        if (args.length < 3 || args.length > 4) {
+            sender.sendMessage(plugin.message(
+                    "<red>Использование:</red> <gray>/guiok give <игрок> <id> [количество]</gray>"));
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            sender.sendMessage(plugin.message(
+                    "<red>Игрок не найден:</red> <gray>" + args[1] + "</gray>"));
+            return true;
+        }
+        String id = args[2].toLowerCase(Locale.ROOT);
+        if (!plugin.items().exists(id)) {
+            sender.sendMessage(plugin.message(
+                    "<red>Неизвестный GuiOk item:</red> <gray>" + id + "</gray>"));
+            return true;
+        }
+        int amount = 1;
+        if (args.length == 4) {
+            try {
+                amount = Integer.parseInt(args[3]);
+            } catch (NumberFormatException exception) {
+                sender.sendMessage(plugin.message("<red>Количество должно быть целым числом.</red>"));
+                return true;
+            }
+        }
+        if (amount < 1 || amount > 6400) {
+            sender.sendMessage(plugin.message("<red>Количество должно быть от 1 до 6400.</red>"));
+            return true;
+        }
+
+        Map<Integer, ItemStack> leftovers = plugin.items().give(target, id, amount);
+        int notGiven = leftovers.values().stream().mapToInt(ItemStack::getAmount).sum();
+        int given = amount - notGiven;
+        sender.sendMessage(plugin.message("<green>Выдано " + given + "× " + id
+                + " игроку " + target.getName() + ".</green>"));
+        if (notGiven > 0) {
+            sender.sendMessage(plugin.message(
+                    "<yellow>Не поместилось в инвентарь: " + notGiven + ".</yellow>"));
         }
         return true;
     }

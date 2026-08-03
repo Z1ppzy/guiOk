@@ -2,6 +2,7 @@ package dev.z1ppzy.guiok;
 
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,11 +169,14 @@ public final class SidebarService {
         String titleTemplate = session.packedTitle()
                 ? settings.packedTitle()
                 : settings.fallbackTitle();
-        session.objective().displayName(renderer.render(
+        Component title = renderer.render(
                 titleTemplate,
                 context,
                 identifier -> placeholders.resolve(player, identifier),
-                session.packedTitle()));
+                session.packedTitle());
+        if (session.updateTitle(title)) {
+            session.objective().displayName(title);
+        }
         int count = Math.min(session.teams().size(), settings.lines().size());
         for (int index = 0; index < count; index++) {
             Component line = renderer.render(
@@ -180,7 +184,9 @@ public final class SidebarService {
                     context,
                     identifier -> placeholders.resolve(player, identifier),
                     session.packedTitle());
-            session.teams().get(index).prefix(line);
+            if (session.updateLine(index, line)) {
+                session.teams().get(index).prefix(line);
+            }
         }
     }
 
@@ -188,11 +194,63 @@ public final class SidebarService {
         return "\u00a7" + Integer.toHexString(index);
     }
 
-    private record Session(
-            Scoreboard board,
-            Scoreboard previous,
-            Objective objective,
-            List<Team> teams,
-            boolean packedTitle) {
+    private static final class Session {
+        private final Scoreboard board;
+        private final Scoreboard previous;
+        private final Objective objective;
+        private final List<Team> teams;
+        private final boolean packedTitle;
+        private final List<Component> renderedLines;
+        private Component renderedTitle;
+
+        private Session(
+                Scoreboard board,
+                Scoreboard previous,
+                Objective objective,
+                List<Team> teams,
+                boolean packedTitle) {
+            this.board = board;
+            this.previous = previous;
+            this.objective = objective;
+            this.teams = List.copyOf(teams);
+            this.packedTitle = packedTitle;
+            renderedLines = new ArrayList<>(Collections.nCopies(teams.size(), null));
+        }
+
+        private Scoreboard board() {
+            return board;
+        }
+
+        private Scoreboard previous() {
+            return previous;
+        }
+
+        private Objective objective() {
+            return objective;
+        }
+
+        private List<Team> teams() {
+            return teams;
+        }
+
+        private boolean packedTitle() {
+            return packedTitle;
+        }
+
+        private boolean updateTitle(Component title) {
+            if (title.equals(renderedTitle)) {
+                return false;
+            }
+            renderedTitle = title;
+            return true;
+        }
+
+        private boolean updateLine(int index, Component line) {
+            if (line.equals(renderedLines.get(index))) {
+                return false;
+            }
+            renderedLines.set(index, line);
+            return true;
+        }
     }
 }
