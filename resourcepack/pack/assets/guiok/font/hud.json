@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "guiok:font/logo.png",
+      "ascent": 44,
+      "height": 48,
+      "chars": [
+        "\ue001"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+# GuiOk downloads a tiny font resource pack and then renders the packed title.
+# The bundled GitHub URL works only while this repository/release is public.
+resource-pack:
+  enabled: true
+  url: "https://github.com/Z1ppzy/guiOk/releases/download/latest/GuiOkResourcePack.zip"
+  id: "762e72f3-2ff5-4a8b-8b97-4dba960fd660"
+  sha1: "auto"
+  required: false
+  replace-existing-packs: false
+  send-on-join: true
+  delay-ticks: 20
+  prompt: "<green>Загрузить оформление сервера?</green> <gray>Без него останется обычный текстовый HUD.</gray>"
+
+sidebar:
+  enabled: true
+  wait-for-pack: true
+  fallback-on-pack-failure: true
+  replace-existing-scoreboard: true
+  refresh-ticks: 20
+  title-with-pack: "<font:guiok:hud><white></white></font>"
+  title-without-pack: "<gradient:#80ff00:#ffffff><bold>GUI OK</bold></gradient>"
+  lines:
+    - ""
+    - "<gray>Игрок:</gray> <white><player></white>"
+    - "<gray>Мир:</gray> <white><world></white>"
+    - "<gray>Баланс:</gray> <green><balance></green>"
+    - "<gray>Онлайн:</gray> <white><online>/<max_online></white>"
+    # Пример PlaceholderAPI. Идентификатор зависит от вашего OneBlock-плагина:
+    # - "<gray>Уровень острова:</gray> <white><papi:aoneblock_island_level></white>"
+
+messages:
+  prefix: "<gradient:#80ff00:#ffffff><bold>GuiOk</bold></gradient> <dark_gray>»</dark_gray> "
+  no-permission: "<red>Недостаточно прав.</red>"
+  reloaded: "<green>Конфигурация перезагружена.</green>"
+  hidden: "<gray>Sidebar скрыт. Повторите <white>/guiok toggle</white>, чтобы вернуть его.</gray>"
+  shown: "<green>Sidebar включён.</green>"
+  pack-resent: "<green>Ресурспак отправлен повторно.</green>"

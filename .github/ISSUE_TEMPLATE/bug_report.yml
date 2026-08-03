@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a GuiOk problem with exact build identity
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: version
+    attributes:
+      label: /guiok version
+      description: Paste the full output, including commit and resource-pack SHA-1.
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: /guiok status
+      description: Paste the output for the affected player.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. Join the server..."
+    validations:
+      required: true
