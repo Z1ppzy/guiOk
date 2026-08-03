@@ -31,11 +31,8 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x gradlew
-
       - name: Verify plugin and resource pack
-        run: ./gradlew clean check jar resourcePackZip --stacktrace --no-daemon
+        run: bash ./gradlew clean check jar resourcePackZip --stacktrace --no-daemon
 
       - name: Publish rolling latest assets
         if: >-
