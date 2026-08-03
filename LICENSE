@@ -1,21 +1,72 @@
-MIT License
+GUIOK SOURCE-AVAILABLE LICENSE
+Version 1.0, 3 August 2026
 
-Copyright (c) 2026 Z1ppzy
+Copyright (c) 2026 Z1ppzy. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This license applies to GuiOk version 1.1.1 and later, including its source
+code, compiled binaries, bundled resource pack, original artwork and
+documentation (collectively, the "Software"), unless a file explicitly states
+different terms. Third-party libraries and the Gradle Wrapper remain governed
+by their respective licenses.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. PERMITTED USE
+
+You may:
+
+- download and run official copies of the Software on servers you own or
+  administer, including public and commercial Minecraft servers;
+- make reasonable backup and deployment copies for those servers;
+- inspect and privately modify the Software for your own use;
+- create and distribute independent plugins, modules, configurations and
+  original assets that use GuiOk's public API, provided that they do not
+  contain copied GuiOk code or assets; and
+- transmit an unmodified official GuiOk resource pack to players connecting to
+  a server running GuiOk, solely as required for those players to use it.
+
+2. REDISTRIBUTION RESTRICTIONS
+
+Without prior written permission from Z1ppzy, you may not publish, redistribute,
+sell, sublicense or otherwise provide any full, partial or modified copy of the
+Software, its source code, compiled binaries or bundled original assets. You
+may not publish a derivative project whose purpose is to replace GuiOk by using
+copied or translated GuiOk implementation code.
+
+Official download links may be shared. Sharing a link is not redistribution of
+the Software itself.
+
+3. ATTRIBUTION AND MARKINGS
+
+You may not remove, conceal or misrepresent the copyright notices, Z1ppzy
+developer attribution, license notices, package names or artifact metadata in
+the Software. Private modifications must retain those notices.
+
+4. CONTRIBUTIONS
+
+By submitting a contribution to the official GuiOk repository, you confirm
+that you have the right to submit it and grant Z1ppzy a perpetual, worldwide,
+royalty-free right to use, modify, relicense and distribute that contribution
+as part of GuiOk. You retain copyright in your original contribution unless a
+separate written agreement says otherwise.
+
+5. TERMINATION
+
+Your permission under this license terminates automatically if you violate its
+terms. It is restored only after the violation has been cured and Z1ppzy has
+confirmed restoration in writing.
+
+6. NO WARRANTY
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED
+BY LAW, Z1PPZY SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+ARISING FROM THE SOFTWARE OR ITS USE.
+
+7. PRIOR RELEASES
+
+Versions published under the MIT License before version 1.1.1 remain available
+under the license terms that accompanied those versions. This license does not
+retroactively revoke rights already granted for those releases.
+
+For redistribution or commercial licensing permission, contact Z1ppzy through
+the official repository: https://github.com/Z1ppzy/guiOk

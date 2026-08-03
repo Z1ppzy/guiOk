@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Z1ppzy. All rights reserved.
+ * Licensed under the GuiOk Source-Available License 1.0.
+ */
+
 package dev.z1ppzy.guiok;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,6 +81,13 @@ class SettingsLoaderTest {
     }
 
     private static BuildInfo buildInfo() {
-        return new BuildInfo("1.0.0", "abc", "today", "26.1.2", HASH);
+        return new BuildInfo(
+                "1.0.0",
+                "abc",
+                "today",
+                "26.1.2",
+                HASH,
+                "Z1ppzy",
+                "GuiOk Source-Available License 1.0");
     }
 }

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Z1ppzy. All rights reserved.
+ * Licensed under the GuiOk Source-Available License 1.0.
+ */
+
 package dev.z1ppzy.guiok;
 
 import dev.z1ppzy.guiok.api.GuiOkApi;
@@ -72,7 +77,9 @@ public final class GuiOkPlugin extends JavaPlugin {
             resourcePacks.start(player);
         }
         getLogger().info("GuiOk " + buildInfo.version()
-                + " enabled; commit=" + buildInfo.commit()
+                + " by " + buildInfo.author()
+                + " enabled; license=" + buildInfo.license()
+                + ", commit=" + buildInfo.commit()
                 + ", packSha1=" + buildInfo.resourcePackSha1()
                 + ", customItems=" + items.itemIds().size()
                 + ", PlaceholderAPI=" + placeholders.available()

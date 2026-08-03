@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Z1ppzy. All rights reserved.
+ * Licensed under the GuiOk Source-Available License 1.0.
+ */
+
 package dev.z1ppzy.guiok;
 
 import java.io.IOException;
@@ -11,7 +16,9 @@ public record BuildInfo(
         String commit,
         String commitDate,
         String paperTarget,
-        String resourcePackSha1) {
+        String resourcePackSha1,
+        String author,
+        String license) {
     private static final String RESOURCE = "guiok-build.properties";
 
     public BuildInfo {
@@ -20,6 +27,8 @@ public record BuildInfo(
         Objects.requireNonNull(commitDate, "commitDate");
         Objects.requireNonNull(paperTarget, "paperTarget");
         Objects.requireNonNull(resourcePackSha1, "resourcePackSha1");
+        Objects.requireNonNull(author, "author");
+        Objects.requireNonNull(license, "license");
     }
 
     public static BuildInfo load(ClassLoader classLoader, Logger logger) {
@@ -43,10 +52,13 @@ public record BuildInfo(
                 properties.getProperty("commit", "unknown"),
                 properties.getProperty("commitDate", "unknown"),
                 properties.getProperty("paperTarget", "unknown"),
-                properties.getProperty("resourcePackSha1", "unknown"));
+                properties.getProperty("resourcePackSha1", "unknown"),
+                properties.getProperty("author", "unknown"),
+                properties.getProperty("license", "unknown"));
     }
 
     private static BuildInfo unknown() {
-        return new BuildInfo("unknown", "unknown", "unknown", "unknown", "unknown");
+        return new BuildInfo(
+                "unknown", "unknown", "unknown", "unknown", "unknown", "unknown", "unknown");
     }
 }

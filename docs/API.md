@@ -1,5 +1,9 @@
 # GuiOk item API
 
+Разработчик и владелец GuiOk: **Z1ppzy**. API распространяется вместе с GuiOk
+по [GuiOk Source-Available License 1.0](../LICENSE); независимые плагины,
+использующие API без включения исходников GuiOk, разрешены лицензией.
+
 `GuiOkApi` — небольшой стабильный слой между общим ресурспаком и игровыми
 плагинами Prison/OneBlock. API не требует Oraxen и не использует NMS.
 

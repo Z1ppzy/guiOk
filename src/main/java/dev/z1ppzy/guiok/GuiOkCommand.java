@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2026 Z1ppzy. All rights reserved.
+ * Licensed under the GuiOk Source-Available License 1.0.
+ */
+
 package dev.z1ppzy.guiok;
 
 import java.util.List;
@@ -129,6 +134,8 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         Component commit = Component.text(info.commit())
                 .clickEvent(ClickEvent.copyToClipboard(info.commit()));
         sender.sendMessage(plugin.message("<white>Версия:</white> <green>" + info.version() + "</green>"));
+        sender.sendMessage(plugin.message("<white>Разработчик:</white> <green>" + info.author() + "</green>"));
+        sender.sendMessage(plugin.message("<white>Лицензия:</white> <gray>" + info.license() + "</gray>"));
         sender.sendMessage(plugin.message("<white>Коммит:</white> ").append(commit));
         sender.sendMessage(plugin.message("<white>Дата коммита:</white> <gray>" + info.commitDate() + "</gray>"));
         sender.sendMessage(plugin.message("<white>Paper API:</white> <gray>" + info.paperTarget() + "</gray>"));

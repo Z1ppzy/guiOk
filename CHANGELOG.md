@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1
+
+- Marked all project-owned Java sources, runtime metadata, JAR manifests and
+  the resource pack with the Z1ppzy developer attribution.
+- Embedded the project license in `GuiOk.jar`, `GuiOk-api.jar` and
+  `GuiOkResourcePack.zip`, with build-time validation against accidental removal.
+- Added developer and license identity to startup diagnostics and
+  `/guiok version`.
+- Changed releases from 1.1.1 onward to the original GuiOk Source-Available
+  License 1.0; previously published versions retain their MIT terms.
+
 ## 1.1.0
 
 - Added lowercase namespaced custom items from `resourcepack/items.yml`.

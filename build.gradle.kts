@@ -1,6 +1,12 @@
+/*
+ * Copyright (c) 2026 Z1ppzy. All rights reserved.
+ * Licensed under the GuiOk Source-Available License 1.0.
+ */
+
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.security.MessageDigest
+import java.util.jar.JarFile
 import java.util.zip.ZipFile
 import javax.imageio.ImageIO
 import org.gradle.api.file.DuplicatesStrategy
@@ -16,7 +22,11 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.1.0"
+version = "1.1.1"
+
+val projectAuthor = "Z1ppzy"
+val projectLicense = "GuiOk Source-Available License 1.0"
+val licenseFile = layout.projectDirectory.file("LICENSE")
 
 val paperApiVersion = providers.gradleProperty("paperApiVersion")
     .orElse("26.1.2.build.74-stable")
@@ -198,6 +208,9 @@ val resourcePackZip by tasks.registering(Zip::class) {
         into("assets/guiok/textures/font")
     }
     from(compiledItemPack)
+    from(licenseFile) {
+        rename { "LICENSE.txt" }
+    }
     isReproducibleFileOrder = true
     isPreserveFileTimestamps = false
 }
@@ -219,10 +232,18 @@ val apiJar by tasks.registering(Jar::class) {
     from(sourceSets.main.get().output) {
         include("dev/z1ppzy/guiok/api/**")
     }
+    from(licenseFile) {
+        rename { "LICENSE.txt" }
+    }
     manifest {
         attributes(
             "Implementation-Title" to "GuiOk API",
             "Implementation-Version" to pluginVersion,
+            "Implementation-Vendor" to projectAuthor,
+            "Specification-Vendor" to projectAuthor,
+            "Built-By" to projectAuthor,
+            "GuiOk-Author" to projectAuthor,
+            "GuiOk-License" to projectLicense,
             "GuiOk-API-Version" to "1")
     }
     isReproducibleFileOrder = true
@@ -236,6 +257,8 @@ val generateBuildInfo by tasks.registering {
     inputs.property("commit", buildCommit)
     inputs.property("commitDate", buildCommitDate)
     inputs.property("paperTarget", paperApiVersion)
+    inputs.property("author", projectAuthor)
+    inputs.property("license", projectLicense)
     outputs.file(generatedBuildInfo)
     doLast {
         val target = generatedBuildInfo.get().asFile
@@ -246,7 +269,9 @@ val generateBuildInfo by tasks.registering {
                 "commit=$buildCommit",
                 "commitDate=$buildCommitDate",
                 "paperTarget=${paperApiVersion.get()}",
-                "resourcePackSha1=${sha1(resourcePackZip.get().archiveFile.get().asFile)}"
+                "resourcePackSha1=${sha1(resourcePackZip.get().archiveFile.get().asFile)}",
+                "author=$projectAuthor",
+                "license=$projectLicense"
             ).joinToString(System.lineSeparator(), postfix = System.lineSeparator()),
             Charsets.UTF_8)
     }
@@ -307,6 +332,62 @@ val validateApiJar by tasks.registering {
     }
 }
 
+val validateBranding by tasks.registering {
+    group = "verification"
+    description = "Validates Z1ppzy attribution and GuiOk licensing in sources and artifacts."
+    dependsOn(tasks.named("jar"), apiJar, resourcePackZip)
+    inputs.files(fileTree("src") { include("**/*.java") })
+    inputs.files(
+        tasks.named<Jar>("jar").flatMap { it.archiveFile },
+        apiJar.flatMap { it.archiveFile },
+        resourcePackZip.flatMap { it.archiveFile })
+    doLast {
+        val copyright = "Copyright (c) 2026 Z1ppzy. All rights reserved."
+        val sourceFiles = fileTree("src") { include("**/*.java") }.files
+        val missingHeaders = sourceFiles
+            .filterNot { it.readText(Charsets.UTF_8).startsWith("/*\n * $copyright") }
+            .map { it.relativeTo(projectDir).invariantSeparatorsPath }
+        if (missingHeaders.isNotEmpty()) {
+            throw GradleException(
+                "Java sources without the Z1ppzy license header: ${missingHeaders.joinToString()}")
+        }
+
+        val jars = listOf(
+            tasks.named<Jar>("jar").get().archiveFile.get().asFile,
+            apiJar.get().archiveFile.get().asFile)
+        for (artifact in jars) {
+            JarFile(artifact).use { jar ->
+                val attributes = jar.manifest.mainAttributes
+                val expected = mapOf(
+                    "Implementation-Vendor" to projectAuthor,
+                    "GuiOk-Author" to projectAuthor,
+                    "GuiOk-License" to projectLicense)
+                val invalid = expected.filter { (name, value) ->
+                    attributes.getValue(name) != value
+                }
+                if (invalid.isNotEmpty()) {
+                    throw GradleException("${artifact.name} has incomplete GuiOk branding: $invalid")
+                }
+                if (jar.getEntry("LICENSE.txt") == null) {
+                    throw GradleException("${artifact.name} does not contain LICENSE.txt")
+                }
+            }
+        }
+
+        ZipFile(resourcePackZip.get().archiveFile.get().asFile).use { zip ->
+            if (zip.getEntry("LICENSE.txt") == null) {
+                throw GradleException("GuiOkResourcePack.zip does not contain LICENSE.txt")
+            }
+            val metadata = zip.getInputStream(zip.getEntry("pack.mcmeta"))
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
+            if (!metadata.contains("GuiOk by $projectAuthor")) {
+                throw GradleException("pack.mcmeta does not identify $projectAuthor")
+            }
+        }
+    }
+}
+
 tasks {
     compileJava {
         options.encoding = "UTF-8"
@@ -334,7 +415,7 @@ tasks {
         }
     }
     check {
-        dependsOn(validateResourcePack, validateApiJar)
+        dependsOn(validateResourcePack, validateApiJar, validateBranding)
     }
     assemble {
         dependsOn(apiJar)
@@ -346,6 +427,19 @@ tasks {
             "dev/z1ppzy/guiok/items/ResourcePackItemCompiler.class",
             "dev/z1ppzy/guiok/items/PackCompilationResult.class")
         from(generatedBuildInfo)
+        from(licenseFile) {
+            rename { "LICENSE.txt" }
+        }
+        manifest {
+            attributes(
+                "Implementation-Title" to "GuiOk",
+                "Implementation-Version" to pluginVersion,
+                "Implementation-Vendor" to projectAuthor,
+                "Specification-Vendor" to projectAuthor,
+                "Built-By" to projectAuthor,
+                "GuiOk-Author" to projectAuthor,
+                "GuiOk-License" to projectLicense)
+        }
         from(resourcePackZip.flatMap { it.archiveFile }) {
             into("embedded")
             rename { "GuiOkResourcePack.zip" }

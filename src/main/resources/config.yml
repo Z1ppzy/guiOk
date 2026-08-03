@@ -1,4 +1,4 @@
-# GuiOk downloads a tiny font resource pack and then renders the packed title.
+# GuiOk by Z1ppzy downloads a tiny font resource pack and renders the packed title.
 # The bundled GitHub URL works only while this repository/release is public.
 resource-pack:
   enabled: true

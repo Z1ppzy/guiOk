@@ -1,8 +1,10 @@
+# Copyright (c) 2026 Z1ppzy. Licensed under the GuiOk Source-Available License 1.0.
 name: GuiOk
 version: '${version}'
 main: dev.z1ppzy.guiok.GuiOkPlugin
-description: Resource-pack HUD and namespaced custom item API for Paper
+description: GuiOk by Z1ppzy — resource-pack HUD and namespaced custom item API for Paper
 authors: [Z1ppzy]
+website: https://github.com/Z1ppzy/guiOk
 api-version: '26.1.2'
 softdepend: [PlaceholderAPI, Vault]
 commands:
