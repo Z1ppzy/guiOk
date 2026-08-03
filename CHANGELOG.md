@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.4
+
+- Redrew the Vault coin as a hand-pixeled micro-sprite with a dark outline,
+  copper rim, highlight, shaded edge and central mint mark.
+- Increased the source glyph budget to 16×16 while keeping its HUD render
+  compact at 11 pixels high.
+
 ## 1.0.3
 
 - Added a compact gold coin glyph for Vault balances.

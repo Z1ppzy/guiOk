@@ -12,8 +12,8 @@
     {
       "type": "bitmap",
       "file": "guiok:font/coin.png",
-      "ascent": 9,
-      "height": 10,
+      "ascent": 10,
+      "height": 11,
       "chars": [
         "\ue002"
       ]

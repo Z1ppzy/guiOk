@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.0.3"
+version = "1.0.4"
 
 val paperApiVersion = providers.gradleProperty("paperApiVersion")
     .orElse("26.1.2.build.74-stable")
@@ -148,8 +148,8 @@ val prepareLogo by tasks.registering {
 }
 
 val prepareCoin by tasks.registering {
-    val maxWidth = 12
-    val maxHeight = 12
+    val maxWidth = 16
+    val maxHeight = 16
     inputs.file(coinSource)
     inputs.property("maxWidth", maxWidth)
     inputs.property("maxHeight", maxHeight)
