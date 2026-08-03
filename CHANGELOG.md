@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- Replaced the generic `GUI OK` demo artwork with a compact `PRISON` mode logo.
+- Updated the no-resource-pack sidebar fallback title to `PRISON`.
+
 ## 1.0.1
 
 - Reduced the bitmap sidebar title from 48 to 22 pixels for a compact HUD.

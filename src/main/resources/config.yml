@@ -18,7 +18,7 @@ sidebar:
   replace-existing-scoreboard: true
   refresh-ticks: 20
   title-with-pack: "<font:guiok:hud><white></white></font>"
-  title-without-pack: "<gradient:#80ff00:#ffffff><bold>GUI OK</bold></gradient>"
+  title-without-pack: "<gradient:#80ff00:#ffffff><bold>PRISON</bold></gradient>"
   lines:
     - ""
     - "<gray>Игрок:</gray> <white><player></white>"

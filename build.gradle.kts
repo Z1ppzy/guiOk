@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.0.1"
+version = "1.0.2"
 
 val paperApiVersion = providers.gradleProperty("paperApiVersion")
     .orElse("26.1.2.build.74-stable")
