@@ -22,7 +22,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.1.1"
+version = "1.1.2"
 
 val projectAuthor = "Z1ppzy"
 val projectLicense = "GuiOk Source-Available License 1.0"
@@ -139,12 +139,49 @@ fun prepareBitmap(
     return result
 }
 
+fun prepareButton(
+    targetFile: File,
+    fillTop: Int,
+    fillBottom: Int,
+    border: Int,
+    highlight: Int
+) {
+    val width = 200
+    val height = 20
+    val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            val transparentCorner =
+                (x == 0 || x == width - 1) && (y == 0 || y == height - 1)
+            val color = when {
+                transparentCorner -> 0
+                x == 0 || x == width - 1 || y == 0 || y == height - 1 ->
+                    0xff100b18.toInt()
+                x == 1 || x == width - 2 || y == 1 || y == height - 2 -> border
+                y == 2 -> highlight
+                y >= height - 4 -> fillBottom
+                else -> fillTop
+            }
+            image.setRGB(x, y, color)
+        }
+    }
+
+    targetFile.parentFile.mkdirs()
+    if (!ImageIO.write(image, "png", targetFile)) {
+        throw GradleException("No PNG writer is available")
+    }
+}
+
 val logoSource = layout.projectDirectory.file("resourcepack/logo.png")
 val preparedLogo = layout.buildDirectory.file(
     "generated-resourcepack/assets/guiok/textures/font/logo.png")
 val coinSource = layout.projectDirectory.file("resourcepack/coin.png")
 val preparedCoin = layout.buildDirectory.file(
     "generated-resourcepack/assets/guiok/textures/font/coin.png")
+val pauseMenuSource = layout.projectDirectory.file("resourcepack/pause-logo.png")
+val preparedPauseMenu = layout.buildDirectory.file(
+    "generated-resourcepack/assets/guiok/textures/font/pause_menu.png")
+val preparedPauseButtons = layout.buildDirectory.dir("generated-pause-buttons")
 val itemConfigSource = layout.projectDirectory.file("resourcepack/items.yml")
 val itemTextureSources = layout.projectDirectory.dir("resourcepack/items")
 val compiledItemPack = layout.buildDirectory.dir("generated-item-pack")
@@ -177,6 +214,50 @@ val prepareCoin by tasks.registering {
     }
 }
 
+val preparePauseMenu by tasks.registering {
+    val maxWidth = 224
+    val maxHeight = 88
+    inputs.file(pauseMenuSource)
+    inputs.property("maxWidth", maxWidth)
+    inputs.property("maxHeight", maxHeight)
+    outputs.file(preparedPauseMenu)
+    doLast {
+        val result = prepareBitmap(
+            pauseMenuSource.asFile,
+            preparedPauseMenu.get().asFile,
+            maxWidth,
+            maxHeight,
+            2)
+        logger.lifecycle("Prepared pause-menu logo: ${result.width}x${result.height}")
+    }
+}
+
+val preparePauseButtons by tasks.registering {
+    outputs.dir(preparedPauseButtons)
+    doLast {
+        val directory = preparedPauseButtons.get().asFile
+        prepareButton(
+            directory.resolve("button.png"),
+            0xff4d2f6b.toInt(),
+            0xff352047.toInt(),
+            0xff76509a.toInt(),
+            0xffa97acd.toInt())
+        prepareButton(
+            directory.resolve("button_highlighted.png"),
+            0xffffa629.toInt(),
+            0xffe97118.toInt(),
+            0xffffd45c.toInt(),
+            0xffffef9a.toInt())
+        prepareButton(
+            directory.resolve("button_disabled.png"),
+            0xff32293e.toInt(),
+            0xff251e2e.toInt(),
+            0xff51445f.toInt(),
+            0xff6b5b78.toInt())
+        logger.lifecycle("Prepared HeavenlyWeiner pause-menu buttons")
+    }
+}
+
 val compileItemPack by tasks.registering(JavaExec::class) {
     group = "build"
     description = "Compiles items.yml and item PNGs into modern resource-pack models."
@@ -196,7 +277,12 @@ val compileItemPack by tasks.registering(JavaExec::class) {
 }
 
 val resourcePackZip by tasks.registering(Zip::class) {
-    dependsOn(prepareLogo, prepareCoin, compileItemPack)
+    dependsOn(
+        prepareLogo,
+        prepareCoin,
+        preparePauseMenu,
+        preparePauseButtons,
+        compileItemPack)
     archiveFileName.set("GuiOkResourcePack.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     duplicatesStrategy = DuplicatesStrategy.FAIL
@@ -206,6 +292,12 @@ val resourcePackZip by tasks.registering(Zip::class) {
     }
     from(preparedCoin) {
         into("assets/guiok/textures/font")
+    }
+    from(preparedPauseMenu) {
+        into("assets/guiok/textures/font")
+    }
+    from(preparedPauseButtons) {
+        into("assets/minecraft/textures/gui/sprites/widget")
     }
     from(compiledItemPack)
     from(licenseFile) {
@@ -289,7 +381,17 @@ val validateResourcePack by tasks.registering {
                 "pack.mcmeta",
                 "assets/guiok/font/hud.json",
                 "assets/guiok/textures/font/logo.png",
-                "assets/guiok/textures/font/coin.png")
+                "assets/guiok/textures/font/coin.png",
+                "assets/guiok/textures/font/pause_menu.png",
+                "assets/minecraft/font/default.json",
+                "assets/minecraft/lang/en_us.json",
+                "assets/minecraft/lang/ru_ru.json",
+                "assets/minecraft/textures/gui/sprites/widget/button.png",
+                "assets/minecraft/textures/gui/sprites/widget/button.png.mcmeta",
+                "assets/minecraft/textures/gui/sprites/widget/button_highlighted.png",
+                "assets/minecraft/textures/gui/sprites/widget/button_highlighted.png.mcmeta",
+                "assets/minecraft/textures/gui/sprites/widget/button_disabled.png",
+                "assets/minecraft/textures/gui/sprites/widget/button_disabled.png.mcmeta")
             val missing = required.filter { zip.getEntry(it) == null }
             if (missing.isNotEmpty()) {
                 throw GradleException("Resource pack misses: ${missing.joinToString()}")
@@ -299,6 +401,35 @@ val validateResourcePack by tasks.registering {
                     ?: throw GradleException("Generated glyph $path is not a readable PNG")
                 if (image.width > 256 || image.height > 256) {
                     throw GradleException("Generated glyph $path exceeds Minecraft's 256x256 limit")
+                }
+            }
+            val buttonPaths = required.filter {
+                it.startsWith("assets/minecraft/textures/gui/sprites/widget/")
+                    && it.endsWith(".png")
+            }
+            for (path in buttonPaths) {
+                val image = ImageIO.read(zip.getInputStream(zip.getEntry(path)))
+                    ?: throw GradleException("Generated button $path is not a readable PNG")
+                if (image.width != 200 || image.height != 20) {
+                    throw GradleException("Generated button $path must be exactly 200x20")
+                }
+            }
+            val fontJson = zip.getInputStream(zip.getEntry("assets/minecraft/font/default.json"))
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
+            if (!fontJson.contains("guiok:font/pause_menu.png")
+                    || !fontJson.contains("\\ue100")) {
+                throw GradleException("Default font does not register the pause-menu glyph")
+            }
+            for (language in listOf("en_us", "ru_ru")) {
+                val languageJson = zip.getInputStream(
+                    zip.getEntry("assets/minecraft/lang/$language.json"))
+                    .bufferedReader(Charsets.UTF_8)
+                    .use { it.readText() }
+                if (!languageJson.contains("HeavenlyWeiner")
+                        || !languageJson.contains("\\ue100")) {
+                    throw GradleException(
+                        "$language pause-menu translations are incomplete")
                 }
             }
         }
@@ -381,8 +512,9 @@ val validateBranding by tasks.registering {
             val metadata = zip.getInputStream(zip.getEntry("pack.mcmeta"))
                 .bufferedReader(Charsets.UTF_8)
                 .use { it.readText() }
-            if (!metadata.contains("GuiOk by $projectAuthor")) {
-                throw GradleException("pack.mcmeta does not identify $projectAuthor")
+            if (!metadata.contains("GuiOk") || !metadata.contains(projectAuthor)) {
+                throw GradleException(
+                    "pack.mcmeta does not identify GuiOk and $projectAuthor")
             }
         }
     }

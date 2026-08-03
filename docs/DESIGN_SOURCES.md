@@ -29,3 +29,26 @@ GuiOk не содержит исходный код или ассеты Oraxen. 
 Сам GuiOk версии 1.1.1 и новее распространяется по собственной оригинальной
 [GuiOk Source-Available License 1.0](../LICENSE), правообладатель и разработчик —
 Z1ppzy. Текст лицензии Oraxen в проект не копировался.
+
+## ESC-меню
+
+Оформление pause screen опирается на ванильные client resources, а не на NMS
+или клиентский мод:
+
+- официальный changelog 1.20.2 описывает отдельные GUI sprites в
+  `textures/gui/sprites`, которые resource pack может переопределять;
+- официальный changelog 1.21.6 описывает `pause_screen_additions` и Dialog для
+  настоящих серверных кнопок;
+- официальный changelog 26.2 фиксирует resource-pack format 88 и актуальные
+  pause-menu sprites.
+
+Источники:
+
+- <https://feedback.minecraft.net/hc/en-us/articles/19703470383757-Minecraft-Java-Edition-1-20-2>
+- <https://www.minecraft.net/en-us/article/minecraft-java-edition-1-21-6>
+- <https://www.minecraft.net/en-us/article/minecraft-java-edition-26-2>
+
+Дополнительно структура проверена непосредственно по официальным Mojang client
+JAR 26.1.2 и 26.2 с обязательной SHA-1-проверкой загрузок. В обеих версиях
+сохраняются `minecraft:default` reference providers и стандартные
+`widget/button`, `button_highlighted`, `button_disabled` размером 200×20.
