@@ -11,3 +11,33 @@ guiok:coin:
   texture: guiok:coin
   parent: minecraft:item/generated
   glint: false
+
+guiok:ancient_core:
+  material: HEART_OF_THE_SEA
+  name: "<gradient:#F59E0B:#EF4444><bold>Древнее ядро</bold></gradient>"
+  lore:
+    - "<dark_gray>Легендарная реликвия глубин"
+  model: guiok:ancient_core
+  texture: guiok:ancient_core
+  parent: minecraft:item/generated
+  glint: false
+
+guiok:miners_charm:
+  material: AMETHYST_SHARD
+  name: "<gradient:#22D3EE:#60A5FA>Талисман шахтёра</gradient>"
+  lore:
+    - "<gray>Счастливый оберег шахтёра"
+  model: guiok:miners_charm
+  texture: guiok:miners_charm
+  parent: minecraft:item/generated
+  glint: false
+
+guiok:memory_shard:
+  material: ECHO_SHARD
+  name: "<gradient:#A78BFA:#F472B6><bold>Осколок памяти</bold></gradient>"
+  lore:
+    - "<gray>Хранит отголоски давно забытого"
+  model: guiok:memory_shard
+  texture: guiok:memory_shard
+  parent: minecraft:item/generated
+  glint: false
