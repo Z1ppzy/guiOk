@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import net.kyori.adventure.resource.ResourcePackRequest;
@@ -26,7 +27,8 @@ public final class ResourcePackService implements Listener {
     private final JavaPlugin plugin;
     private final HudRenderer renderer;
     private final SidebarService sidebar;
-    private final Map<UUID, PackState> states = new HashMap<>();
+    /** Read from PlaceholderAPI requests, which other plugins may issue off the main thread. */
+    private final Map<UUID, PackState> states = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> pending = new HashMap<>();
     private PluginSettings.ResourcePackSettings packSettings;
     private PluginSettings.SidebarSettings sidebarSettings;
