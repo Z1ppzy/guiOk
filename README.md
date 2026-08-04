@@ -197,6 +197,10 @@ prison:token:
 | `bracket_right` | `U+E209` | правый шеврон обводки |
 | `crown_tall` | `U+E210` | корона 16×16, `height 16, ascent 12` |
 
+Проверить, что установленный пак несёт иконки, — `/guiok icons`: он печатает имя,
+сам символ и готовый плейсхолдер. `/guiok items` для этого не годится, там живут
+предметы из `items.yml`, а глиф предметом не является.
+
 `bracket_left` и `bracket_right` собираются в рамку вокруг тега:
 `bracket_left` + текст + `bracket_right`.
 
@@ -280,6 +284,7 @@ tagprefix: "%guiok_icon_crown% "
 | `/guiok version` | JAR, git-коммит, дата, Paper API, SHA-1 | `guiok.use` |
 | `/guiok status` | pack state, sidebar, PAPI и Vault | `guiok.use` |
 | `/guiok items` | список зарегистрированных item ID | `guiok.admin` |
+| `/guiok icons` | глифы пака, их символы и плейсхолдеры | `guiok.admin` |
 | `/guiok give <игрок> <id> [количество]` | выдать кастомный предмет | `guiok.admin` |
 | `/guiok reload` | атомарно перечитать `config.yml` и `items.yml` | `guiok.admin` |
 

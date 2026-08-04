@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.4
+
+- Added `/guiok icons`, which lists every pack glyph with its character and ready
+  `%guiok_icon_<name>%` placeholder; `/guiok items` lists items and never showed
+  glyphs, leaving an operator to guess whether the installed pack carries them.
+- Added the glyph count to `/guiok status`.
+
 ## 1.1.3
 
 - Added eleven status glyphs in `U+E2xx` — star, crown, ember, pickaxe, shackle,

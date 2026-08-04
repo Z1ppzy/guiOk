@@ -24,7 +24,7 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
     private static final List<String> PLAYER_SUBCOMMANDS =
             List.of("help", "toggle", "resend", "version", "status");
     private static final List<String> ADMIN_SUBCOMMANDS =
-            List.of("help", "toggle", "resend", "version", "status", "items", "give", "reload");
+            List.of("help", "toggle", "resend", "version", "status", "items", "icons", "give", "reload");
 
     private final GuiOkPlugin plugin;
 
@@ -46,6 +46,7 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
             case "version" -> version(sender);
             case "status" -> status(sender);
             case "items" -> items(sender);
+            case "icons", "glyphs" -> icons(sender);
             case "give" -> give(sender, args);
             case "reload" -> reload(sender);
             default -> {
@@ -99,6 +100,7 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(plugin.message("<white>/guiok status</white> <gray>— состояние HUD и ресурспака</gray>"));
         if (sender.hasPermission("guiok.admin")) {
             sender.sendMessage(plugin.message("<white>/guiok items</white> <gray>— список item API</gray>"));
+            sender.sendMessage(plugin.message("<white>/guiok icons</white> <gray>— глифы пака и их плейсхолдеры</gray>"));
             sender.sendMessage(plugin.message("<white>/guiok give <игрок> <id> [количество]</white> <gray>— выдать кастомный предмет</gray>"));
             sender.sendMessage(plugin.message("<white>/guiok reload</white> <gray>— безопасно перечитать config.yml и items.yml</gray>"));
         }
@@ -159,6 +161,8 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(plugin.message("<white>Item API:</white> <green>v"
                     + plugin.items().apiVersion() + "</green> <gray>("
                     + plugin.items().itemIds().size() + " предметов)</gray>"));
+            sender.sendMessage(plugin.message("<white>Иконки:</white> <green>"
+                    + PackIcons.names().size() + "</green> <gray>(/guiok icons)</gray>"));
             sender.sendMessage(plugin.message("<white>URL:</white> <gray>"
                     + plugin.settings().resourcePack().url() + "</gray>"));
             sender.sendMessage(plugin.message("<white>Pack ID:</white> <gray>"
@@ -178,6 +182,36 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
             int end = Math.min(index + 10, ids.size());
             sender.sendMessage(plugin.message(
                     "<gray>" + String.join(", ", ids.subList(index, end)) + "</gray>"));
+        }
+        return true;
+    }
+
+    /**
+     * Glyphs are a resource pack, not a catalog of items, so {@code /guiok items} never
+     * showed them and an operator had no way to tell whether the pack they installed
+     * carries the icons their other plugins reference.
+     *
+     * <p>The character is printed only for a player: the console has no resource pack,
+     * and a private-use code point there is noise rather than an icon.
+     */
+    private boolean icons(CommandSender sender) {
+        if (!sender.hasPermission("guiok.admin")) {
+            sender.sendMessage(plugin.configuredMessage(plugin.settings().messages().noPermission()));
+            return true;
+        }
+        List<String> names = PackIcons.names().stream().sorted().toList();
+        sender.sendMessage(plugin.message("<white>GuiOk icons:</white> <green>" + names.size() + "</green>"));
+        boolean showGlyph = sender instanceof Player player
+                && plugin.resourcePacks().usesPackedTitle(player);
+        for (String name : names) {
+            String glyph = showGlyph ? PackIcons.glyph(name) + " " : "";
+            sender.sendMessage(plugin.message("<white>" + name + "</white> <gray>—</gray> " + glyph
+                    + "<dark_gray>%guiok_icon_" + name + "%</dark_gray>"));
+        }
+        if (sender instanceof Player && !showGlyph) {
+            sender.sendMessage(plugin.message(
+                    "<gray>Пак не применён к вам, поэтому символы не показаны:</gray>"
+                            + " <white>/guiok resend</white>"));
         }
         return true;
     }
