@@ -11,13 +11,28 @@ import java.util.Set;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-/** Public service for creating and identifying GuiOk custom items. */
+/**
+ * Public service for creating and identifying GuiOk custom items, and for reading the
+ * pack glyphs GuiOk registers in {@code minecraft:default}.
+ */
 public interface GuiOkApi {
-    int API_VERSION = 1;
+    int API_VERSION = 2;
 
     int apiVersion();
 
     Set<String> itemIds();
+
+    /** Icon names GuiOk publishes as glyphs, the same ones {@code %guiok_icon_<name>%} accepts. */
+    Set<String> iconIds();
+
+    /**
+     * The character that draws an icon once the player has applied the pack. Because the
+     * glyph is registered in the default font as well, the caller can drop it into any text
+     * the client renders — a nametag, a scoreboard team prefix, chat or a menu.
+     *
+     * @return empty when no icon carries that name; never a substitute character
+     */
+    Optional<String> glyph(String iconId);
 
     boolean exists(String id);
 

@@ -345,7 +345,7 @@ val apiJar by tasks.registering(Jar::class) {
             "Built-By" to projectAuthor,
             "GuiOk-Author" to projectAuthor,
             "GuiOk-License" to projectLicense,
-            "GuiOk-API-Version" to "1")
+            "GuiOk-API-Version" to "2")
     }
     isReproducibleFileOrder = true
     isPreserveFileTimestamps = false

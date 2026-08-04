@@ -5,6 +5,7 @@
 
 package dev.z1ppzy.guiok.items;
 
+import dev.z1ppzy.guiok.PackIcons;
 import dev.z1ppzy.guiok.api.GuiOkApi;
 import dev.z1ppzy.guiok.api.GuiOkItemDefinition;
 import java.util.ArrayList;
@@ -38,6 +39,16 @@ public final class GuiOkItemService implements GuiOkApi {
     @Override
     public Set<String> itemIds() {
         return catalog.ids();
+    }
+
+    @Override
+    public Set<String> iconIds() {
+        return PackIcons.names();
+    }
+
+    @Override
+    public Optional<String> glyph(String iconId) {
+        return iconId == null ? Optional.empty() : Optional.ofNullable(PackIcons.glyph(iconId));
     }
 
     @Override
