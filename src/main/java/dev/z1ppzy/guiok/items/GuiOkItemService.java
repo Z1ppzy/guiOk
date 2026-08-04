@@ -6,6 +6,7 @@
 package dev.z1ppzy.guiok.items;
 
 import dev.z1ppzy.guiok.PackIcons;
+import dev.z1ppzy.guiok.PackSpaces;
 import dev.z1ppzy.guiok.api.GuiOkApi;
 import dev.z1ppzy.guiok.api.GuiOkItemDefinition;
 import java.util.ArrayList;
@@ -49,6 +50,15 @@ public final class GuiOkItemService implements GuiOkApi {
     @Override
     public Optional<String> glyph(String iconId) {
         return iconId == null ? Optional.empty() : Optional.ofNullable(PackIcons.glyph(iconId));
+    }
+
+    @Override
+    public Optional<String> space(int pixels) {
+        try {
+            return Optional.of(PackSpaces.of(pixels));
+        } catch (IllegalArgumentException exception) {
+            return Optional.empty();
+        }
     }
 
     @Override

@@ -47,6 +47,7 @@ public final class PackIcons {
         glyphs.put("bracket_left", "\ue208");
         glyphs.put("bracket_right", "\ue209");
         glyphs.put("crown_tall", "\ue210");
+        glyphs.put("gui_backpack", "\ue220");
         return Collections.unmodifiableMap(glyphs);
     }
 

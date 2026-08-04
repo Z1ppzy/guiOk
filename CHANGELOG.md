@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.5
+
+- Added a space provider to both fonts: powers of two from one to 256 pixels in
+  each direction, so any offset up to ±511 is a short sequence of code points.
+  A negative offset is the only way to draw a picture anywhere other than where
+  the text already is, which is what a custom container background needs.
+- Added `GuiOkApi#space(int)` and raised the contract to version 3.
+- Added the `gui_backpack` glyph: a 176×17 header plate that covers the title
+  strip of a chest window without reaching the first row of slots.
+- Added a build check that both fonts declare exactly the offsets PackSpaces
+  composes from, so a misplaced picture fails the build instead of the server.
+
 ## 1.1.4
 
 - Added `/guiok icons`, which lists every pack glyph with its character and ready

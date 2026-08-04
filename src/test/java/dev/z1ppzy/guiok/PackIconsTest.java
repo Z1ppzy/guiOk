@@ -53,6 +53,7 @@ class PackIconsTest {
         assertEquals("\ue208", PackIcons.glyph("bracket_left"));
         assertEquals("\ue209", PackIcons.glyph("bracket_right"));
         assertEquals("\ue210", PackIcons.glyph("crown_tall"));
+        assertEquals("\ue220", PackIcons.glyph("gui_backpack"));
     }
 
     @Test

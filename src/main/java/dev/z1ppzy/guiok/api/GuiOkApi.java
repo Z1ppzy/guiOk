@@ -16,7 +16,7 @@ import org.bukkit.inventory.ItemStack;
  * pack glyphs GuiOk registers in {@code minecraft:default}.
  */
 public interface GuiOkApi {
-    int API_VERSION = 2;
+    int API_VERSION = 3;
 
     int apiVersion();
 
@@ -33,6 +33,16 @@ public interface GuiOkApi {
      * @return empty when no icon carries that name; never a substitute character
      */
     Optional<String> glyph(String iconId);
+
+    /**
+     * A zero-width string that moves the text cursor by {@code pixels}, negative to the
+     * left. Only a negative offset can put a picture anywhere other than where the text
+     * already is, which is what a custom container background is made of.
+     *
+     * @return empty when the offset is beyond what the pack registers; never a clipped
+     *     offset, because a picture drawn in the wrong place is worse than none
+     */
+    Optional<String> space(int pixels);
 
     boolean exists(String id);
 

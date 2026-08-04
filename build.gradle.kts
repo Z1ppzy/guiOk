@@ -23,7 +23,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.1.4"
+version = "1.1.5"
 
 val projectAuthor = "Z1ppzy"
 val projectLicense = "GuiOk Source-Available License 1.0"
@@ -345,7 +345,7 @@ val apiJar by tasks.registering(Jar::class) {
             "Built-By" to projectAuthor,
             "GuiOk-Author" to projectAuthor,
             "GuiOk-License" to projectLicense,
-            "GuiOk-API-Version" to "2")
+            "GuiOk-API-Version" to "3")
     }
     isReproducibleFileOrder = true
     isPreserveFileTimestamps = false
@@ -448,6 +448,43 @@ fun validateStatusGlyphs(zip: ZipFile, defaultFontJson: String, hudFontJson: Str
     logger.lifecycle("Validated status glyphs: ${iconNames.joinToString()}")
 }
 
+val packSpacesSource = layout.projectDirectory
+    .file("src/main/java/dev/z1ppzy/guiok/PackSpaces.java")
+
+/**
+ * A picture in a GUI title is placed by a negative space, so an offset the pack does
+ * not register puts it in the wrong place instead of nowhere — which is why both fonts
+ * are checked against the code points PackSpaces composes from.
+ */
+@Suppress("UNCHECKED_CAST")
+fun validateSpaces(defaultFontJson: String, hudFontJson: String) {
+    val expected = (0 until 9).flatMap { index ->
+        val pixels = 1 shl index
+        listOf(0xe300 + index to pixels, 0xe310 + index to -pixels)
+    }
+    for ((label, json) in listOf("default" to defaultFontJson, "hud" to hudFontJson)) {
+        val providers = ((JsonSlurper().parseText(json) as Map<String, Any>)["providers"]
+            as List<Map<String, Any>>)
+        val spaces = providers.singleOrNull { it["type"] == "space" }
+            ?: throw GradleException("The $label font registers no space provider")
+        val advances = spaces["advances"] as Map<String, Number>
+        for ((codePoint, pixels) in expected) {
+            val name = "U+%04X".format(codePoint)
+            val declared = advances[String(Character.toChars(codePoint))]
+                ?: throw GradleException("The $label font misses space $name ($pixels px)")
+            if (declared.toInt() != pixels) {
+                throw GradleException(
+                    "Space $name is $declared px in the $label font, expected $pixels")
+            }
+        }
+    }
+    val spacesJava = packSpacesSource.asFile.readText(Charsets.UTF_8)
+    if (!spacesJava.contains("0xe300") || !spacesJava.contains("0xe310")) {
+        throw GradleException("PackSpaces no longer starts at the registered code points")
+    }
+    logger.lifecycle("Validated ${expected.size} pack spaces")
+}
+
 val validateResourcePack by tasks.registering {
     group = "verification"
     description = "Validates the generated resource-pack structure and glyph bounds."
@@ -455,6 +492,7 @@ val validateResourcePack by tasks.registering {
     inputs.file(resourcePackZip.flatMap { it.archiveFile })
     inputs.dir(statusIconSources)
     inputs.file(packIconsSource)
+    inputs.file(packSpacesSource)
     doLast {
         val pack = resourcePackZip.get().archiveFile.get().asFile
         ZipFile(pack).use { zip ->
@@ -518,6 +556,7 @@ val validateResourcePack by tasks.registering {
                 }
             }
             validateStatusGlyphs(zip, fontJson, hudFontJson)
+            validateSpaces(fontJson, hudFontJson)
             for (language in listOf("en_us", "ru_ru")) {
                 val languageJson = zip.getInputStream(
                     zip.getEntry("assets/minecraft/lang/$language.json"))
