@@ -35,10 +35,12 @@ val minecraftVersion = providers.gradleProperty("minecraftVersion").orElse("26.2
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.extendedclip.com/releases/")
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:${paperApiVersion.get()}")
+    compileOnly("me.clip:placeholderapi:2.11.6")
 
     testImplementation("io.papermc.paper:paper-api:${paperApiVersion.get()}")
     testImplementation(platform("org.junit:junit-bom:5.13.4"))

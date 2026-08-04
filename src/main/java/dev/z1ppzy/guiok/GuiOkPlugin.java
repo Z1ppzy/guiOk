@@ -29,6 +29,7 @@ public final class GuiOkPlugin extends JavaPlugin {
     private GuiOkItemService items;
     private SidebarService sidebar;
     private ResourcePackService resourcePacks;
+    private GuiOkPlaceholderExpansion expansion;
 
     @Override
     public void onEnable() {
@@ -73,6 +74,14 @@ public final class GuiOkPlugin extends JavaPlugin {
             getLogger().log(Level.WARNING, "Cannot export bundled resource pack", exception);
         }
 
+        if (placeholders.available()) {
+            expansion = new GuiOkPlaceholderExpansion(this);
+            if (!expansion.register()) {
+                expansion = null;
+                getLogger().warning("PlaceholderAPI refused the GuiOk expansion");
+            }
+        }
+
         for (Player player : getServer().getOnlinePlayers()) {
             resourcePacks.start(player);
         }
@@ -89,6 +98,10 @@ public final class GuiOkPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         getServer().getServicesManager().unregisterAll(this);
+        if (expansion != null) {
+            expansion.unregister();
+            expansion = null;
+        }
         if (resourcePacks != null) {
             resourcePacks.shutdown();
         }
