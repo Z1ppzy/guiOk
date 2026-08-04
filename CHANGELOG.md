@@ -7,6 +7,11 @@
 - Added Russian and English return-button labels for HeavenlyWeiner.
 - Added purple normal, orange highlighted and dim disabled vanilla button
   sprites with the official 200×20 nine-slice metadata.
+- Registered the sidebar logo and coin glyphs in the default font as well, so
+  third-party plugins such as TAB can print them as plain characters.
+- Added the optional `guiok` PlaceholderAPI expansion with
+  `%guiok_icon_coin%` and `%guiok_icon_logo%`, which stay empty until the
+  player has applied the pack.
 - Validated every generated pause-menu image, language override and font
   reference as part of the resource-pack build.
 - Verified the resource format against official Minecraft 26.1.2 and 26.2
