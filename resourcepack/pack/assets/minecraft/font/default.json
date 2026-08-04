@@ -28,6 +28,105 @@
       ]
     },
     {
+      "type": "bitmap",
+      "file": "guiok:font/icons/star.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue200"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/crown.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue201"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/ember.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue202"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/pickaxe.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue203"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/shackle.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue204"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/skull.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue205"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/gem.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue206"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/clover.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue207"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/bracket_left.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue208"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/bracket_right.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue209"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/icons/crown_tall.png",
+      "ascent": 12,
+      "height": 16,
+      "chars": [
+        "\ue210"
+      ]
+    },
+    {
       "type": "reference",
       "id": "minecraft:include/space"
     },

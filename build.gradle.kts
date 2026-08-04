@@ -3,6 +3,7 @@
  * Licensed under the GuiOk Source-Available License 1.0.
  */
 
+import groovy.json.JsonSlurper
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.security.MessageDigest
@@ -184,6 +185,9 @@ val pauseMenuSource = layout.projectDirectory.file("resourcepack/pause-logo.png"
 val preparedPauseMenu = layout.buildDirectory.file(
     "generated-resourcepack/assets/guiok/textures/font/pause_menu.png")
 val preparedPauseButtons = layout.buildDirectory.dir("generated-pause-buttons")
+// Status glyphs are authored at their exact on-screen height, so they are copied
+// verbatim: any rescale here would blur the pixel art in nametags and chat.
+val statusIconSources = layout.projectDirectory.dir("resourcepack/icons")
 val itemConfigSource = layout.projectDirectory.file("resourcepack/items.yml")
 val itemTextureSources = layout.projectDirectory.dir("resourcepack/items")
 val compiledItemPack = layout.buildDirectory.dir("generated-item-pack")
@@ -301,6 +305,9 @@ val resourcePackZip by tasks.registering(Zip::class) {
     from(preparedPauseButtons) {
         into("assets/minecraft/textures/gui/sprites/widget")
     }
+    from(statusIconSources) {
+        into("assets/guiok/textures/font/icons")
+    }
     from(compiledItemPack)
     from(licenseFile) {
         rename { "LICENSE.txt" }
@@ -371,11 +378,83 @@ val generateBuildInfo by tasks.registering {
     }
 }
 
+val packIconsSource = layout.projectDirectory
+    .file("src/main/java/dev/z1ppzy/guiok/PackIcons.java")
+
+@Suppress("UNCHECKED_CAST")
+fun bitmapProviders(json: String): List<Map<String, Any>> =
+    ((JsonSlurper().parseText(json) as Map<String, Any>)["providers"] as List<Map<String, Any>>)
+        .filter { it["type"] == "bitmap" }
+
+/**
+ * Every PNG in resourcepack/icons has to reach the client through both fonts with
+ * identical metrics, keep a code point to itself and be published by PackIcons —
+ * otherwise a glyph silently turns into a missing-character box for players.
+ */
+fun validateStatusGlyphs(zip: ZipFile, defaultFontJson: String, hudFontJson: String) {
+    val iconDirectory = statusIconSources.asFile
+    val iconNames = (iconDirectory.listFiles { file -> file.extension == "png" } ?: emptyArray())
+        .map { it.nameWithoutExtension }
+        .sorted()
+    if (iconNames.isEmpty()) {
+        throw GradleException("No status glyphs in ${iconDirectory.invariantSeparatorsPath}")
+    }
+
+    val defaultProviders = bitmapProviders(defaultFontJson)
+    val hudProviders = bitmapProviders(hudFontJson)
+    val iconsJava = packIconsSource.asFile.readText(Charsets.UTF_8)
+    val owners = mutableMapOf<String, String>()
+    for (name in iconNames) {
+        val texture = "guiok:font/icons/$name.png"
+        val path = "assets/guiok/textures/font/icons/$name.png"
+        val entry = zip.getEntry(path)
+            ?: throw GradleException("Resource pack misses status glyph $path")
+        val declared = defaultProviders.singleOrNull { it["file"] == texture }
+            ?: throw GradleException("Default font does not register status glyph $texture")
+        val hud = hudProviders.singleOrNull { it["file"] == texture }
+            ?: throw GradleException("HUD font does not register status glyph $texture")
+        if (declared["height"] != hud["height"] || declared["ascent"] != hud["ascent"]) {
+            throw GradleException("Status glyph $name has different metrics in the two fonts")
+        }
+
+        val image = ImageIO.read(zip.getInputStream(entry))
+            ?: throw GradleException("Status glyph $path is not a readable PNG")
+        val height = (declared["height"] as Number).toInt()
+        if (image.height != height) {
+            throw GradleException(
+                "Status glyph $name is ${image.height}px tall while the font declares $height; "
+                    + "the client would rescale and blur the pixel art")
+        }
+        if ((declared["ascent"] as Number).toInt() > height) {
+            throw GradleException("Status glyph $name has an ascent above its own height")
+        }
+
+        val chars = declared["chars"] as List<String>
+        val codepoint = chars.singleOrNull()
+            ?: throw GradleException("Status glyph $name must claim exactly one code point")
+        if (codepoint.length != 1 || codepoint.single().code !in 0xe000..0xf8ff) {
+            throw GradleException("Status glyph $name must use one private-use code point")
+        }
+        val clash = owners.put(codepoint, name)
+        if (clash != null) {
+            throw GradleException("Status glyphs $clash and $name share a code point")
+        }
+        val escaped = "\\u%04x".format(codepoint.single().code)
+        if (!iconsJava.contains("\"$name\", \"$escaped\"")) {
+            throw GradleException(
+                "PackIcons does not publish $name ($escaped), so %guiok_icon_$name% stays empty")
+        }
+    }
+    logger.lifecycle("Validated status glyphs: ${iconNames.joinToString()}")
+}
+
 val validateResourcePack by tasks.registering {
     group = "verification"
     description = "Validates the generated resource-pack structure and glyph bounds."
     dependsOn(resourcePackZip)
     inputs.file(resourcePackZip.flatMap { it.archiveFile })
+    inputs.dir(statusIconSources)
+    inputs.file(packIconsSource)
     doLast {
         val pack = resourcePackZip.get().archiveFile.get().asFile
         ZipFile(pack).use { zip ->
@@ -438,6 +517,7 @@ val validateResourcePack by tasks.registering {
                         "Default font does not expose $texture ($codepoint) to other plugins")
                 }
             }
+            validateStatusGlyphs(zip, fontJson, hudFontJson)
             for (language in listOf("en_us", "ru_ru")) {
                 val languageJson = zip.getInputStream(
                     zip.getEntry("assets/minecraft/lang/$language.json"))
