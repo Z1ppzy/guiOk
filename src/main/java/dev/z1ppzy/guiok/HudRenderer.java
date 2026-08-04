@@ -5,7 +5,6 @@
 
 package dev.z1ppzy.guiok;
 
-import java.util.Map;
 import java.util.function.Function;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -17,7 +16,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 
 public final class HudRenderer {
     private static final Key HUD_FONT = Key.key("guiok", "hud");
-    private static final Map<String, String> PACK_ICONS = Map.of("coin", "\ue002");
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
     public Component render(
@@ -44,7 +42,7 @@ public final class HudRenderer {
             if (arguments.hasNext()) {
                 throw context.newException("The <icon> tag accepts exactly one name", arguments);
             }
-            String glyph = PACK_ICONS.get(identifier);
+            String glyph = PackIcons.glyph(identifier);
             if (glyph == null) {
                 throw context.newException("Unknown GuiOk icon: " + identifier);
             }
