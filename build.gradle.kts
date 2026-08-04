@@ -421,6 +421,21 @@ val validateResourcePack by tasks.registering {
                     || !fontJson.contains("\\ue100")) {
                 throw GradleException("Default font does not register the pause-menu glyph")
             }
+            val hudFontJson = zip.getInputStream(zip.getEntry("assets/guiok/font/hud.json"))
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
+            val sharedGlyphs = mapOf(
+                "guiok:font/logo.png" to "\\ue001",
+                "guiok:font/coin.png" to "\\ue002")
+            for ((texture, codepoint) in sharedGlyphs) {
+                if (!hudFontJson.contains(texture) || !hudFontJson.contains(codepoint)) {
+                    throw GradleException("HUD font no longer provides $texture ($codepoint)")
+                }
+                if (!fontJson.contains(texture) || !fontJson.contains(codepoint)) {
+                    throw GradleException(
+                        "Default font does not expose $texture ($codepoint) to other plugins")
+                }
+            }
             for (language in listOf("en_us", "ru_ru")) {
                 val languageJson = zip.getInputStream(
                     zip.getEntry("assets/minecraft/lang/$language.json"))

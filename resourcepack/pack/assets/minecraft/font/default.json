@@ -10,6 +10,24 @@
       ]
     },
     {
+      "type": "bitmap",
+      "file": "guiok:font/logo.png",
+      "ascent": 20,
+      "height": 22,
+      "chars": [
+        "\ue001"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "guiok:font/coin.png",
+      "ascent": 10,
+      "height": 11,
+      "chars": [
+        "\ue002"
+      ]
+    },
+    {
       "type": "reference",
       "id": "minecraft:include/space"
     },
