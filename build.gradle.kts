@@ -23,7 +23,7 @@ plugins {
 }
 
 group = "dev.z1ppzy"
-version = "1.1.2"
+version = "1.1.3"
 
 val projectAuthor = "Z1ppzy"
 val projectLicense = "GuiOk Source-Available License 1.0"

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.3
+
+- Added eleven status glyphs in `U+E2xx` — star, crown, ember, pickaxe, shackle,
+  skull, gem, clover, both frame brackets and a tall 16×16 crown — registered in
+  `minecraft:default` so TAB can print them above a player's head.
+- Added `resourcepack/icons` as the source directory for status glyphs; PNGs are
+  packed verbatim, and the build fails when a PNG height differs from the height
+  its font provider declares.
+- Added build-time cross-checks that every status glyph reaches both fonts with
+  identical metrics, owns a private-use code point of its own and is published by
+  `PackIcons`, so `%guiok_icon_<name>%` can never resolve to nothing.
+- Added `GuiOkApi#glyph(String)` and `GuiOkApi#iconIds()`; the API contract is now
+  version 2 and stays backwards compatible with version 1.
+
 ## 1.1.2
 
 - Added an original two-line HeavenlyWeiner pixel-art mark to the vanilla
