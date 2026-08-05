@@ -154,10 +154,14 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         if (sender instanceof Player player) {
             sender.sendMessage(plugin.message("<white>Ресурспак:</white> <gray>"
                     + plugin.resourcePacks().state(player).name() + "</gray>"));
+            sender.sendMessage(plugin.message("<white>Клиент:</white> <gray>"
+                    + (plugin.bedrockPlayers().isBedrock(player) ? "Bedrock" : "Java") + "</gray>"));
             sender.sendMessage(plugin.message("<white>Sidebar:</white> "
                     + enabled(plugin.sidebar().visible(player))));
         }
         if (sender.hasPermission("guiok.admin")) {
+            sender.sendMessage(plugin.message("<white>Bedrock определяется через:</white> <gray>"
+                    + plugin.bedrockPlayers().source() + "</gray>"));
             sender.sendMessage(plugin.message("<white>Item API:</white> <green>v"
                     + plugin.items().apiVersion() + "</green> <gray>("
                     + plugin.items().itemIds().size() + " предметов)</gray>"));
