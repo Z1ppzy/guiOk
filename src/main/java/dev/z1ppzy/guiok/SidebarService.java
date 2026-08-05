@@ -7,12 +7,12 @@ package dev.z1ppzy.guiok;
 
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Consumer;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -179,23 +179,61 @@ public final class SidebarService {
         String titleTemplate = session.packedTitle()
                 ? settings.packedTitle()
                 : settings.fallbackTitle();
-        Component title = scope.render(titleTemplate);
-        if (session.updateTitle(title)) {
-            session.objective().displayName(title);
-        }
+        apply(scope, titleTemplate, session.title(), session.objective()::displayName);
 
         int count = Math.min(session.teams().size(), settings.lines().size());
         for (int index = 0; index < count; index++) {
-            Component line = scope.render(settings.lines().get(index));
-            if (session.updateLine(index, line)) {
-                session.teams().get(index).prefix(line);
-            }
+            Team team = session.teams().get(index);
+            apply(scope, settings.lines().get(index), session.line(index), team::prefix);
         }
     }
 
+    /**
+     * Renders one slot and pushes it only when it changed. A slot whose template reads nothing
+     * that has moved since the last refresh is skipped without rendering at all — parsing
+     * MiniMessage is by far the most expensive part of a refresh, and most lines say the same
+     * thing second after second.
+     */
+    private static void apply(
+            HudRenderer.Refresh scope, String template, Slot slot, Consumer<Component> push) {
+        String cacheKey = scope.cacheKey(template);
+        if (slot.matches(template, cacheKey)) {
+            return;
+        }
+        Component rendered = scope.render(template);
+        if (slot.update(template, cacheKey, rendered)) {
+            push.accept(rendered);
+        }
+    }
 
     private static String uniqueEntry(int index) {
         return "\u00a7" + Integer.toHexString(index);
+    }
+
+    /**
+     * One rendered position of the sidebar — the title or a line — remembering what produced
+     * its current contents so an unchanged slot costs nothing.
+     */
+    private static final class Slot {
+        private String template;
+        private String cacheKey;
+        private Component rendered;
+
+        /** True when this slot already shows what the template would render right now. */
+        private boolean matches(String template, String cacheKey) {
+            return cacheKey != null
+                    && cacheKey.equals(this.cacheKey)
+                    && template.equals(this.template);
+        }
+
+        /** @return true when the value on screen has to be replaced */
+        private boolean update(String template, String cacheKey, Component rendered) {
+            boolean changed = !rendered.equals(this.rendered);
+            this.template = template;
+            this.cacheKey = cacheKey;
+            this.rendered = rendered;
+            return changed;
+        }
     }
 
     private static final class Session {
@@ -204,8 +242,8 @@ public final class SidebarService {
         private final Objective objective;
         private final List<Team> teams;
         private final boolean packedTitle;
-        private final List<Component> renderedLines;
-        private Component renderedTitle;
+        private final List<Slot> lines;
+        private final Slot title = new Slot();
 
         private Session(
                 Scoreboard board,
@@ -218,7 +256,10 @@ public final class SidebarService {
             this.objective = objective;
             this.teams = List.copyOf(teams);
             this.packedTitle = packedTitle;
-            renderedLines = new ArrayList<>(Collections.nCopies(teams.size(), null));
+            lines = new ArrayList<>(teams.size());
+            for (int index = 0; index < teams.size(); index++) {
+                lines.add(new Slot());
+            }
         }
 
         private Scoreboard board() {
@@ -241,20 +282,12 @@ public final class SidebarService {
             return packedTitle;
         }
 
-        private boolean updateTitle(Component title) {
-            if (title.equals(renderedTitle)) {
-                return false;
-            }
-            renderedTitle = title;
-            return true;
+        private Slot title() {
+            return title;
         }
 
-        private boolean updateLine(int index, Component line) {
-            if (line.equals(renderedLines.get(index))) {
-                return false;
-            }
-            renderedLines.set(index, line);
-            return true;
+        private Slot line(int index) {
+            return lines.get(index);
         }
     }
 }
