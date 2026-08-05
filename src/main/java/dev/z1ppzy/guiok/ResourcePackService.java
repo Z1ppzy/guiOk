@@ -8,6 +8,7 @@ package dev.z1ppzy.guiok;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -30,6 +31,14 @@ public final class ResourcePackService implements Listener {
     /** Read from PlaceholderAPI requests, which other plugins may issue off the main thread. */
     private final Map<UUID, PackState> states = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> pending = new HashMap<>();
+    /**
+     * Counts pack requests per player. A client answers a request whenever it likes, so a
+     * status for a superseded request — one replaced by {@code /guiok resend} or by a reload —
+     * can still arrive and would otherwise report on a pack the player is no longer being
+     * offered. The callback carries the generation it was built for and is dropped when it no
+     * longer matches. Written from the main thread, read from pack callbacks.
+     */
+    private final Map<UUID, Integer> generations = new ConcurrentHashMap<>();
     private PluginSettings.ResourcePackSettings packSettings;
     private PluginSettings.SidebarSettings sidebarSettings;
 
@@ -59,6 +68,7 @@ public final class ResourcePackService implements Listener {
             task.cancel();
         }
         states.remove(playerId);
+        generations.remove(playerId);
         sidebar.hide(event.getPlayer(), false);
     }
 
@@ -83,19 +93,24 @@ public final class ResourcePackService implements Listener {
             PluginSettings.SidebarSettings newSidebarSettings) {
         packSettings = Objects.requireNonNull(newPackSettings, "newPackSettings");
         sidebarSettings = Objects.requireNonNull(newSidebarSettings, "newSidebarSettings");
-        for (BukkitTask task : pending.values()) {
-            task.cancel();
-        }
-        pending.clear();
+        cancelPending();
         states.clear();
+        // The cleared states are about to be rebuilt by a fresh request per player; a status
+        // still travelling for the previous config must not land in the middle of that.
+        generations.replaceAll((playerId, generation) -> generation + 1);
     }
 
     public void shutdown() {
+        cancelPending();
+        states.clear();
+        generations.clear();
+    }
+
+    private void cancelPending() {
         for (BukkitTask task : pending.values()) {
             task.cancel();
         }
         pending.clear();
-        states.clear();
     }
 
     private void start(Player player, long delayTicks) {
@@ -104,6 +119,7 @@ public final class ResourcePackService implements Listener {
         if (previous != null) {
             previous.cancel();
         }
+        int generation = supersede(playerId);
 
         if (!packSettings.enabled() || !packSettings.sendOnJoin()) {
             states.put(playerId, PackState.DISABLED);
@@ -119,11 +135,16 @@ public final class ResourcePackService implements Listener {
         }
 
         BukkitTask task = Bukkit.getScheduler().runTaskLater(
-                plugin, () -> sendNow(playerId), delayTicks);
+                plugin, () -> sendNow(playerId, generation), delayTicks);
         pending.put(playerId, task);
     }
 
-    private void sendNow(UUID playerId) {
+    /** Retires every request in flight for a player and returns the new generation. */
+    private int supersede(UUID playerId) {
+        return generations.merge(playerId, 1, Integer::sum);
+    }
+
+    private void sendNow(UUID playerId, int generation) {
         pending.remove(playerId);
         Player player = Bukkit.getPlayer(playerId);
         if (player == null || !player.isOnline()) {
@@ -139,7 +160,8 @@ public final class ResourcePackService implements Listener {
                     .replace(packSettings.replaceExistingPacks())
                     .required(packSettings.required())
                     .prompt(renderer.plain(packSettings.prompt()))
-                    .callback((packId, status, audience) -> dispatchStatus(playerId, packId, status))
+                    .callback((packId, status, audience) ->
+                            dispatchStatus(playerId, generation, packId, status))
                     .build();
             player.sendResourcePacks(request);
         } catch (IllegalArgumentException exception) {
@@ -149,8 +171,9 @@ public final class ResourcePackService implements Listener {
         }
     }
 
-    private void dispatchStatus(UUID playerId, UUID packId, ResourcePackStatus status) {
-        Runnable update = () -> handleStatus(playerId, packId, status);
+    private void dispatchStatus(
+            UUID playerId, int generation, UUID packId, ResourcePackStatus status) {
+        Runnable update = () -> handleStatus(playerId, generation, packId, status);
         if (Bukkit.isPrimaryThread()) {
             update.run();
         } else if (plugin.isEnabled()) {
@@ -158,12 +181,28 @@ public final class ResourcePackService implements Listener {
         }
     }
 
-    private void handleStatus(UUID playerId, UUID packId, ResourcePackStatus status) {
+    /** The request generation a status must carry to still be relevant; for tests. */
+    int currentGeneration(UUID playerId) {
+        return generations.getOrDefault(playerId, 0);
+    }
+
+    void handleStatus(
+            UUID playerId, int generation, UUID packId, ResourcePackStatus status) {
         if (!packSettings.id().equals(packId)) {
             return;
         }
+        if (generations.getOrDefault(playerId, 0) != generation) {
+            plugin.getLogger().fine(
+                    "Ignoring status " + status.name() + " for a superseded pack request");
+            return;
+        }
+        Optional<PackSignal> signal = PackSignal.from(status.name());
+        if (signal.isEmpty()) {
+            plugin.getLogger().fine("Ignoring unknown resource pack status: " + status.name());
+            return;
+        }
         PackState current = states.getOrDefault(playerId, PackState.NOT_SENT);
-        PackState next = PackStateMachine.transition(current, PackSignal.valueOf(status.name()));
+        PackState next = PackStateMachine.transition(current, signal.get());
         states.put(playerId, next);
 
         Player player = Bukkit.getPlayer(playerId);
