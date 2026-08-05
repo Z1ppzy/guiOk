@@ -47,6 +47,10 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.13.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    // Runs a real server implementation in-process, which is what makes the scheduler, the
+    // scoreboard and the command dispatcher reachable from a unit test. The artifact is
+    // published per Paper API version and must be kept in step with paperApiVersion.
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.1.2:4.115.0")
 }
 
 java {
@@ -673,6 +677,10 @@ tasks {
     }
     test {
         useJUnitPlatform()
+        // Booting the real plugin under MockBukkit needs the same build stamp the JAR carries:
+        // without it BuildInfo falls back to "unknown" and 'sha1: auto' fails validation.
+        dependsOn(generateBuildInfo)
+        classpath += files(layout.buildDirectory.dir("generated-resources"))
         finalizedBy(jacocoTestReport)
     }
     jacocoTestReport {
