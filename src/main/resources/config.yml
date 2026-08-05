@@ -8,12 +8,19 @@ resource-pack:
   required: false
   replace-existing-packs: false
   send-on-join: true
-  delay-ticks: 20
+  # Задержка перед отправкой пака. 0 — сразу на следующем тике после входа.
+  # Если промпт начнёт проскакивать, не дав игроку нажать «принять», поднимите
+  # до 5 тиков: клиенту хватает четверти секунды, чтобы устаканиться.
+  delay-ticks: 0
   prompt: "<green>Загрузить оформление сервера?</green> <gray>Без него останется обычный текстовый HUD.</gray>"
 
 sidebar:
   enabled: true
-  wait-for-pack: true
+  # false — показать sidebar сразу с текстовым заголовком и переключить его на
+  # packed, когда пак применится. Игрок никогда не остаётся без HUD, но видит
+  # подмену заголовка. true — HUD появляется только вместе с паком, без подмены,
+  # но до этого момента экран пустой.
+  wait-for-pack: false
   fallback-on-pack-failure: true
   replace-existing-scoreboard: true
   refresh-ticks: 20

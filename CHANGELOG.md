@@ -14,6 +14,17 @@
   with the replacement named, because MiniMessage prints an unknown tag verbatim and
   the old line would otherwise reach players as the literal text `<balance>`.
 - `/guiok status` no longer reports Vault, and the startup line no longer mentions it.
+- The sidebar now costs a fifth of what it did: a refresh renders only the lines whose
+  values actually moved, and asks PlaceholderAPI once per placeholder instead of twice.
+  Measured on the shipped config at 38 425 ns per refresh before and 7 048 ns after —
+  a refresh walks every player in one tick, so at 500 players that spike drops from
+  19.2 ms to 3.5 ms out of the 50 ms a tick has.
+- Changed two defaults so a joining player is never left staring at an empty screen:
+  `sidebar.wait-for-pack` is now `false` (the HUD appears immediately with the text
+  title and switches to the packed one when the pack lands) and
+  `resource-pack.delay-ticks` is now `0`. Existing installations keep their own
+  config.yml and are unaffected; raise `delay-ticks` to `5` if the prompt flashes past
+  before a player can accept it.
 
 ## 1.1.5
 
