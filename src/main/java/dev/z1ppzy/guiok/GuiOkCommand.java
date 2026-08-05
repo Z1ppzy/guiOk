@@ -5,11 +5,13 @@
 
 package dev.z1ppzy.guiok;
 
+import dev.z1ppzy.guiok.items.GuiOkItemService;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -181,7 +183,8 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         for (int index = 0; index < ids.size(); index += 10) {
             int end = Math.min(index + 10, ids.size());
             sender.sendMessage(plugin.message(
-                    "<gray>" + String.join(", ", ids.subList(index, end)) + "</gray>"));
+                    "<gray><value></gray>",
+                    Placeholder.unparsed("value", String.join(", ", ids.subList(index, end)))));
         }
         return true;
     }
@@ -229,13 +232,15 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         Player target = Bukkit.getPlayerExact(args[1]);
         if (target == null) {
             sender.sendMessage(plugin.message(
-                    "<red>Игрок не найден:</red> <gray>" + args[1] + "</gray>"));
+                    "<red>Игрок не найден:</red> <gray><value></gray>",
+                    Placeholder.unparsed("value", args[1])));
             return true;
         }
         String id = args[2].toLowerCase(Locale.ROOT);
         if (!plugin.items().exists(id)) {
             sender.sendMessage(plugin.message(
-                    "<red>Неизвестный GuiOk item:</red> <gray>" + id + "</gray>"));
+                    "<red>Неизвестный GuiOk item:</red> <gray><value></gray>",
+                    Placeholder.unparsed("value", id)));
             return true;
         }
         int amount = 1;
@@ -247,19 +252,24 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
         }
-        if (amount < 1 || amount > 6400) {
-            sender.sendMessage(plugin.message("<red>Количество должно быть от 1 до 6400.</red>"));
+        if (amount < 1 || amount > GuiOkItemService.MAX_GIVE_AMOUNT) {
+            sender.sendMessage(plugin.message("<red>Количество должно быть от 1 до "
+                    + GuiOkItemService.MAX_GIVE_AMOUNT + ".</red>"));
             return true;
         }
 
         Map<Integer, ItemStack> leftovers = plugin.items().give(target, id, amount);
         int notGiven = leftovers.values().stream().mapToInt(ItemStack::getAmount).sum();
         int given = amount - notGiven;
-        sender.sendMessage(plugin.message("<green>Выдано " + given + "× " + id
-                + " игроку " + target.getName() + ".</green>"));
+        sender.sendMessage(plugin.message(
+                "<green>Выдано <amount>× <id> игроку <target>.</green>",
+                Placeholder.unparsed("amount", Integer.toString(given)),
+                Placeholder.unparsed("id", id),
+                Placeholder.unparsed("target", target.getName())));
         if (notGiven > 0) {
             sender.sendMessage(plugin.message(
-                    "<yellow>Не поместилось в инвентарь: " + notGiven + ".</yellow>"));
+                    "<yellow>Не поместилось в инвентарь: <amount>.</yellow>",
+                    Placeholder.unparsed("amount", Integer.toString(notGiven))));
         }
         return true;
     }
@@ -273,8 +283,9 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
         if (result.successful()) {
             sender.sendMessage(plugin.configuredMessage(plugin.settings().messages().reloaded()));
         } else {
-            sender.sendMessage(plugin.message("<red>Перезагрузка отклонена:</red> <gray>"
-                    + result.message() + "</gray>"));
+            sender.sendMessage(plugin.message(
+                    "<red>Перезагрузка отклонена:</red> <gray><reason></gray>",
+                    Placeholder.unparsed("reason", result.message())));
         }
         return true;
     }

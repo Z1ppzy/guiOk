@@ -24,6 +24,13 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 public final class GuiOkItemService implements GuiOkApi {
+    /**
+     * Upper bound for a single {@link #give} call. A player inventory holds far less than this,
+     * so the only effect of a larger amount is allocating the surplus stacks before handing
+     * them straight back as leftovers — an unbounded amount would exhaust the server heap.
+     */
+    public static final int MAX_GIVE_AMOUNT = 6400;
+
     private final NamespacedKey itemIdKey;
     private volatile ItemCatalog catalog;
 
@@ -120,24 +127,33 @@ public final class GuiOkItemService implements GuiOkApi {
     public Map<Integer, ItemStack> give(Player player, String id, int amount) {
         requirePrimaryThread();
         Objects.requireNonNull(player, "player");
-        if (amount < 1) {
-            throw new IllegalArgumentException("amount must be positive");
+        if (amount < 1 || amount > MAX_GIVE_AMOUNT) {
+            throw new IllegalArgumentException(
+                    "amount must be between 1 and " + MAX_GIVE_AMOUNT);
         }
         GuiOkItemDefinition definition = catalog.definition(id)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown GuiOk item: " + id));
-        int maximum = definition.material().getMaxStackSize();
-        List<ItemStack> stacks = new ArrayList<>((amount + maximum - 1) / maximum);
-        int remaining = amount;
-        while (remaining > 0) {
-            int stackAmount = Math.min(remaining, maximum);
-            stacks.add(create(id, stackAmount));
-            remaining -= stackAmount;
+        int[] sizes = stackSizes(amount, definition.material().getMaxStackSize());
+        List<ItemStack> stacks = new ArrayList<>(sizes.length);
+        for (int size : sizes) {
+            stacks.add(create(id, size));
         }
         return Map.copyOf(player.getInventory().addItem(stacks.toArray(ItemStack[]::new)));
     }
 
     public void replace(ItemCatalog newCatalog) {
         catalog = Objects.requireNonNull(newCatalog, "newCatalog");
+    }
+
+    /** Splits an amount into full stacks plus a remainder, largest-first. */
+    static int[] stackSizes(int amount, int maxStackSize) {
+        int[] sizes = new int[(amount + maxStackSize - 1) / maxStackSize];
+        int remaining = amount;
+        for (int index = 0; index < sizes.length; index++) {
+            sizes[index] = Math.min(remaining, maxStackSize);
+            remaining -= sizes[index];
+        }
+        return sizes;
     }
 
     private static void requirePrimaryThread() {

@@ -15,12 +15,19 @@ import java.util.Objects;
 import java.util.logging.Level;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class GuiOkPlugin extends JavaPlugin {
+/**
+ * Deliberately not {@code final}, unlike the rest of the plugin: MockBukkit loads a plugin by
+ * generating a proxy subclass, and that is what lets {@code GuiOkPluginTest} start the real
+ * plugin — plugin.yml, bundled config, commands and services — inside the test suite. Bukkit
+ * only ever instantiates this class reflectively, so nothing else relies on it being final.
+ */
+public class GuiOkPlugin extends JavaPlugin {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private BuildInfo buildInfo;
     private PluginSettings settings;
@@ -134,8 +141,13 @@ public final class GuiOkPlugin extends JavaPlugin {
         return ReloadResult.success();
     }
 
-    public Component message(String content) {
-        return miniMessage.deserialize(settings.messages().prefix() + content);
+    /**
+     * Renders a prefixed MiniMessage template. Untrusted text — command arguments, player
+     * names, YAML parser output — must be passed through an unparsed resolver rather than
+     * concatenated into {@code content}, or it is interpreted as markup.
+     */
+    public Component message(String content, TagResolver... resolvers) {
+        return miniMessage.deserialize(settings.messages().prefix() + content, resolvers);
     }
 
     public Component configuredMessage(String content) {
