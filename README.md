@@ -36,7 +36,8 @@ namespaced custom items с автоматически собираемыми т�
 - PNG вместо обычного текстового заголовка;
 - текстовый fallback, если игрок отклонил или не загрузил пак;
 - строки из MiniMessage, встроенных значений и PlaceholderAPI;
-- баланс через Vault, если Vault и economy provider установлены;
+- баланс, ранг и любые другие значения через PlaceholderAPI — GuiOk не привязан
+  к конкретному плагину экономики и не ограничен одной валютой;
 - custom items через современный `item_model`, без ручного CustomModelData;
 - API для Prison/OneBlock-плагинов через Bukkit ServicesManager;
 - сохранённый `/guiok toggle` через PDC игрока;
@@ -110,7 +111,6 @@ SHA-1 собранного ZIP автоматически записываетс
 | `<world>` | текущий мир |
 | `<online>` / `<max_online>` | онлайн |
 | `<ping>` | ping |
-| `<balance>` | Vault-баланс или `—` |
 | `<icon:coin>` / `<icon:logo>` | пробел и глиф после значения; без загруженного пака исчезает целиком |
 | `<x>` / `<y>` / `<z>` | координаты |
 | `<papi:identifier>` | `%identifier%` из PlaceholderAPI |
@@ -124,7 +124,7 @@ sidebar:
     - "<gray>Игрок:</gray> <white><player></white>"
     - "<gray>Остров:</gray> <white><papi:aoneblock_island_name></white>"
     - "<gray>Уровень:</gray> <green><papi:aoneblock_island_level></green>"
-    - "<green><balance></green><icon:coin>"
+    - "<green><papi:cmi_user_balance_formatted></green><icon:coin>"
 ```
 
 Если PlaceholderAPI или expansion отсутствуют, тег выводит `—`, не ломая весь
@@ -302,7 +302,7 @@ tagprefix: "%guiok_icon_crown% "
 | `/guiok toggle` | скрыть/вернуть sidebar | `guiok.use` |
 | `/guiok resend` | повторно отправить пак | `guiok.use` |
 | `/guiok version` | JAR, git-коммит, дата, Paper API, SHA-1 | `guiok.use` |
-| `/guiok status` | pack state, sidebar, PAPI и Vault | `guiok.use` |
+| `/guiok status` | pack state, sidebar и PlaceholderAPI | `guiok.use` |
 | `/guiok items` | список зарегистрированных item ID | `guiok.admin` |
 | `/guiok icons` | глифы пака, их символы и плейсхолдеры | `guiok.admin` |
 | `/guiok give <игрок> <id> [количество]` | выдать кастомный предмет | `guiok.admin` |

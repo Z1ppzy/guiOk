@@ -88,7 +88,7 @@ class PackIconsTest {
     void findsUnknownIconTagsInATemplate() {
         assertEquals(Set.of(), PackIcons.unknownIconNames("<gray>Баланс:</gray> <icon:coin>"));
         assertEquals(Set.of(), PackIcons.unknownIconNames("<icon:COIN><icon:logo>"));
-        assertEquals(Set.of("coins"), PackIcons.unknownIconNames("<balance><icon:coins>"));
+        assertEquals(Set.of("coins"), PackIcons.unknownIconNames("<player><icon:coins>"));
         assertEquals(
                 Set.of("coins", "teapot"),
                 PackIcons.unknownIconNames("<icon:coins> and <icon:teapot> and <icon:logo>"));

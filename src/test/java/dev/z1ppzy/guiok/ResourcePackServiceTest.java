@@ -44,7 +44,7 @@ class ResourcePackServiceTest {
                 plugin,
                 sidebarSettings(true, true),
                 new HudRenderer(),
-                new HudContextFactory(server, new EconomyBridge(logger, () -> null, null)),
+                new HudContextFactory(server),
                 new PlaceholderBridge(logger, null));
     }
 

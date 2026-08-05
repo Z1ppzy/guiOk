@@ -73,7 +73,7 @@ class SettingsLoaderTest {
     @Test
     void rejectsSidebarLineReferencingAnUnknownIcon() throws Exception {
         YamlConfiguration config = validConfig();
-        config.set("sidebar.lines", List.of("<balance><icon:coins>"));
+        config.set("sidebar.lines", List.of("<player><icon:coins>"));
 
         ConfigException exception = assertThrows(
                 ConfigException.class, () -> SettingsLoader.load(config, buildInfo()));
@@ -81,6 +81,45 @@ class SettingsLoaderTest {
         assertTrue(exception.getMessage().contains("sidebar.lines[0]"));
         assertTrue(exception.getMessage().contains("coins"));
         assertTrue(exception.getMessage().contains("coin"), "should list the available icons");
+    }
+
+    /**
+     * The Vault-backed {@code <balance>} tag is gone. MiniMessage prints an unknown tag
+     * verbatim, so an upgraded server would quietly show "&lt;balance&gt;" to every player;
+     * the config has to be rejected with a pointer at the PlaceholderAPI replacement instead.
+     */
+    @Test
+    void rejectsTheRemovedBalanceTagAndNamesTheReplacement() throws Exception {
+        YamlConfiguration line = validConfig();
+        line.set("sidebar.lines", List.of("<green><balance></green>"));
+
+        ConfigException exception = assertThrows(
+                ConfigException.class, () -> SettingsLoader.load(line, buildInfo()));
+
+        assertTrue(exception.getMessage().contains("sidebar.lines[0]"));
+        assertTrue(exception.getMessage().contains("<balance>"));
+        assertTrue(exception.getMessage().contains("papi"), "should point at the replacement");
+    }
+
+    @Test
+    void rejectsTheRemovedBalanceTagInEitherTitle() throws Exception {
+        YamlConfiguration packed = validConfig();
+        packed.set("sidebar.title-with-pack", "<balance>");
+        YamlConfiguration fallback = validConfig();
+        fallback.set("sidebar.title-without-pack", "<balance>");
+
+        assertThrows(ConfigException.class, () -> SettingsLoader.load(packed, buildInfo()));
+        assertThrows(ConfigException.class, () -> SettingsLoader.load(fallback, buildInfo()));
+    }
+
+    /** A PlaceholderAPI balance is the supported replacement and must load cleanly. */
+    @Test
+    void acceptsAPlaceholderApiBalanceLine() throws Exception {
+        PluginSettings settings = load(
+                "sidebar.lines",
+                List.of("<green><papi:cmi_user_balance_formatted></green><icon:coin>"));
+
+        assertEquals(1, settings.sidebar().lines().size());
     }
 
     @Test

@@ -60,7 +60,6 @@ public final class HudRenderer {
                 Placeholder.unparsed("online", hud.online()),
                 Placeholder.unparsed("max_online", hud.maxOnline()),
                 Placeholder.unparsed("ping", hud.ping()),
-                Placeholder.unparsed("balance", hud.balance()),
                 Placeholder.unparsed("x", hud.x()),
                 Placeholder.unparsed("y", hud.y()),
                 Placeholder.unparsed("z", hud.z()),

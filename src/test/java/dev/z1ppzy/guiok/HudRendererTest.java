@@ -26,38 +26,33 @@ class HudRendererTest {
                 "7",
                 "100",
                 "42",
-                "1.5K",
                 "10",
                 "64",
                 "-3");
 
         Component result = new HudRenderer().render(
-                "<player> | <world> | <balance> | <papi:oneblock_level>",
+                "<player> | <world> | <papi:oneblock_level>",
                 context,
                 identifier -> Component.text(identifier.equals("oneblock_level") ? "18" : "—"));
 
-        assertEquals("Alex | oneblock | 1.5K | 18", PLAIN.serialize(result));
+        assertEquals("Alex | oneblock | 18", PLAIN.serialize(result));
     }
 
     @Test
     void rendersPackIconAfterValueOnlyWhenPackIsApplied() {
-        HudContext context = new HudContext(
-                "Alex",
-                Component.text("Alex"),
-                "prison",
-                "1",
-                "100",
-                "42",
-                "1.5K",
-                "10",
-                "64",
-                "-3");
+        HudContext context = context("Alex");
         HudRenderer renderer = new HudRenderer();
 
         Component packed = renderer.render(
-                "<balance><icon:coin>", context, identifier -> Component.empty(), true);
+                "<papi:balance><icon:coin>",
+                context,
+                identifier -> Component.text("1.5K"),
+                true);
         Component fallback = renderer.render(
-                "<balance><icon:coin>", context, identifier -> Component.empty(), false);
+                "<papi:balance><icon:coin>",
+                context,
+                identifier -> Component.text("1.5K"),
+                false);
 
         assertEquals("1.5K \ue002", PLAIN.serialize(packed));
         assertEquals("1.5K", PLAIN.serialize(fallback));
@@ -66,11 +61,24 @@ class HudRendererTest {
     @Test
     void resolvesEveryBuiltInPlaceholder() {
         Component result = new HudRenderer().render(
-                "<player>|<world>|<online>|<max_online>|<ping>|<balance>|<x>|<y>|<z>",
+                "<player>|<world>|<online>|<max_online>|<ping>|<x>|<y>|<z>",
                 context("Alex"),
                 identifier -> Component.empty());
 
-        assertEquals("Alex|oneblock|7|100|42|1.5K|10|64|-3", PLAIN.serialize(result));
+        assertEquals("Alex|oneblock|7|100|42|10|64|-3", PLAIN.serialize(result));
+    }
+
+    /**
+     * The balance used to be a built-in tag backed by Vault. It is gone, and MiniMessage
+     * prints an unknown tag verbatim — which is exactly why SettingsLoader rejects it rather
+     * than letting it reach a sidebar.
+     */
+    @Test
+    void noLongerProvidesABuiltInBalanceTag() {
+        Component result = new HudRenderer().render(
+                "<balance>", context("Alex"), identifier -> Component.empty());
+
+        assertEquals("<balance>", PLAIN.serialize(result));
     }
 
     /**
@@ -82,7 +90,7 @@ class HudRendererTest {
         String hostile = "<red><click:run_command:'/op me'>x</click></red>";
         HudContext hud = new HudContext(
                 hostile, Component.text(hostile), hostile,
-                "7", "100", "42", "1.5K", "10", "64", "-3");
+                "7", "100", "42", "10", "64", "-3");
 
         Component result = new HudRenderer().render(
                 "<player> <world> <papi:some_expansion>",
@@ -132,7 +140,6 @@ class HudRendererTest {
                 "7",
                 "100",
                 "42",
-                "1.5K",
                 "10",
                 "64",
                 "-3");

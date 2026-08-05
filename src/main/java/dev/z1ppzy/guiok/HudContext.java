@@ -14,7 +14,6 @@ public record HudContext(
         String online,
         String maxOnline,
         String ping,
-        String balance,
         String x,
         String y,
         String z) {

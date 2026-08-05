@@ -151,8 +151,6 @@ public final class GuiOkCommand implements CommandExecutor, TabCompleter {
     private boolean status(CommandSender sender) {
         sender.sendMessage(plugin.message("<white>PlaceholderAPI:</white> "
                 + enabled(plugin.placeholders().available())));
-        sender.sendMessage(plugin.message("<white>Vault economy:</white> "
-                + enabled(plugin.economy().available())));
         if (sender instanceof Player player) {
             sender.sendMessage(plugin.message("<white>Ресурспак:</white> <gray>"
                     + plugin.resourcePacks().state(player).name() + "</gray>"));

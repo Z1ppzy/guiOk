@@ -32,7 +32,6 @@ public class GuiOkPlugin extends JavaPlugin {
     private BuildInfo buildInfo;
     private PluginSettings settings;
     private PlaceholderBridge placeholders;
-    private EconomyBridge economy;
     private GuiOkItemService items;
     private SidebarService sidebar;
     private ResourcePackService resourcePacks;
@@ -55,7 +54,6 @@ public class GuiOkPlugin extends JavaPlugin {
         }
 
         placeholders = PlaceholderBridge.discover(getLogger(), getClassLoader());
-        economy = EconomyBridge.discover(getLogger(), getServer(), getClassLoader());
         items = new GuiOkItemService(this, itemCatalog);
         getServer().getServicesManager().register(
                 GuiOkApi.class, items, this, ServicePriority.Normal);
@@ -64,7 +62,7 @@ public class GuiOkPlugin extends JavaPlugin {
                 this,
                 settings.sidebar(),
                 renderer,
-                new HudContextFactory(getServer(), economy),
+                new HudContextFactory(getServer()),
                 placeholders);
         resourcePacks = new ResourcePackService(
                 this, settings.resourcePack(), settings.sidebar(), renderer, sidebar);
@@ -98,8 +96,7 @@ public class GuiOkPlugin extends JavaPlugin {
                 + ", commit=" + buildInfo.commit()
                 + ", packSha1=" + buildInfo.resourcePackSha1()
                 + ", customItems=" + items.itemIds().size()
-                + ", PlaceholderAPI=" + placeholders.available()
-                + ", Vault=" + economy.available());
+                + ", PlaceholderAPI=" + placeholders.available());
     }
 
     @Override
@@ -164,10 +161,6 @@ public class GuiOkPlugin extends JavaPlugin {
 
     public PlaceholderBridge placeholders() {
         return placeholders;
-    }
-
-    public EconomyBridge economy() {
-        return economy;
     }
 
     public GuiOkItemService items() {

@@ -23,10 +23,12 @@ sidebar:
     - ""
     - "<gray>Игрок:</gray> <white><player></white>"
     - "<gray>Мир:</gray> <white><world></white>"
-    - "<green><balance></green><icon:coin>"
+    # Баланс приходит из PlaceholderAPI, поэтому подходит любой плагин экономики
+    # и любая валюта: CMI — cmi_user_balance_formatted, Vault — vault_eco_balance.
+    - "<green><papi:cmi_user_balance_formatted></green><icon:coin>"
     - "<gray>Онлайн:</gray> <white><online>/<max_online></white>"
-    # Пример PlaceholderAPI. Идентификатор зависит от вашего OneBlock-плагина:
-    # - "<gray>Уровень острова:</gray> <white><papi:aoneblock_island_level></white>"
+    # Тем же способом выводится что угодно из ваших плагинов — ранг, шахта, престиж:
+    # - "<gray>Ранг:</gray> <white><papi:prison_rank></white>"
 
 messages:
   prefix: "<gradient:#80ff00:#ffffff><bold>GuiOk</bold></gradient> <dark_gray>»</dark_gray> "

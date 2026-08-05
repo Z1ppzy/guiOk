@@ -215,12 +215,11 @@ class SidebarServiceTest {
 
     private SidebarService service(PluginSettings.SidebarSettings settings) {
         Logger logger = Logger.getLogger(SidebarServiceTest.class.getName());
-        EconomyBridge economy = new EconomyBridge(logger, () -> null, null);
         return new SidebarService(
                 plugin,
                 settings,
                 new HudRenderer(),
-                new HudContextFactory(server, economy),
+                new HudContextFactory(server),
                 new PlaceholderBridge(logger, null));
     }
 

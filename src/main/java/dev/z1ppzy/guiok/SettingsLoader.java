@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -50,12 +51,15 @@ public final class SettingsLoader {
                 throw new ConfigException("sidebar.lines[" + index + "] is invalid or longer than 2048 chars");
             }
             requireKnownIcons(lines.get(index), "sidebar.lines[" + index + ']');
+            requireNoRemovedTags(lines.get(index), "sidebar.lines[" + index + ']');
         }
 
         String packedTitle = required(config, "sidebar.title-with-pack");
         String fallbackTitle = required(config, "sidebar.title-without-pack");
         requireKnownIcons(packedTitle, "sidebar.title-with-pack");
         requireKnownIcons(fallbackTitle, "sidebar.title-without-pack");
+        requireNoRemovedTags(packedTitle, "sidebar.title-with-pack");
+        requireNoRemovedTags(fallbackTitle, "sidebar.title-without-pack");
 
         PluginSettings.ResourcePackSettings resourcePack =
                 new PluginSettings.ResourcePackSettings(
@@ -88,6 +92,28 @@ public final class SettingsLoader {
                 required(config, "messages.pack-resent"));
 
         return new PluginSettings(resourcePack, sidebar, messages);
+    }
+
+    /**
+     * Tags GuiOk used to provide itself, with the replacement to migrate to. MiniMessage
+     * prints an unknown tag verbatim, so without this an upgraded server would quietly show
+     * "&lt;balance&gt;" on every sidebar instead of a number. Drop an entry once operators
+     * have had a release or two to move over.
+     */
+    private static final Map<String, String> REMOVED_TAGS = Map.of(
+            "balance",
+            "GuiOk no longer reads Vault; use a PlaceholderAPI placeholder instead, "
+                    + "for example <papi:cmi_user_balance_formatted> or "
+                    + "<papi:vault_eco_balance_formatted>");
+
+    private static void requireNoRemovedTags(String template, String path)
+            throws ConfigException {
+        for (Map.Entry<String, String> removed : REMOVED_TAGS.entrySet()) {
+            if (template.contains('<' + removed.getKey() + '>')) {
+                throw new ConfigException(path + " uses the removed <" + removed.getKey()
+                        + "> tag: " + removed.getValue());
+            }
+        }
     }
 
     private static void requireKnownIcons(String template, String path) throws ConfigException {

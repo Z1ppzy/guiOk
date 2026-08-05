@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- **Breaking.** Removed the Vault dependency and the built-in `<balance>` tag. Vault
+  reached exactly one value — the balance on the sidebar — while costing a soft
+  dependency, service discovery, a TTL cache and its own failure handling, and it
+  exposes only the one primary economy, which a server with several currencies
+  outgrows immediately. Read the balance through PlaceholderAPI instead, which
+  already carries every other value on the HUD:
+  `<papi:cmi_user_balance_formatted>`, `<papi:vault_eco_balance_formatted>` or any
+  placeholder your economy publishes.
+- A config that still uses `<balance>` is now rejected on load and on `/guiok reload`
+  with the replacement named, because MiniMessage prints an unknown tag verbatim and
+  the old line would otherwise reach players as the literal text `<balance>`.
+- `/guiok status` no longer reports Vault, and the startup line no longer mentions it.
+
 ## 1.1.5
 
 - Added a space provider to both fonts: powers of two from one to 256 pixels in
