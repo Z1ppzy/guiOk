@@ -27,7 +27,7 @@ public final class PlaceholderBridge {
     private final Method setPlaceholders;
     private boolean reportedFailure;
 
-    private PlaceholderBridge(Logger logger, Method setPlaceholders) {
+    PlaceholderBridge(Logger logger, Method setPlaceholders) {
         this.logger = Objects.requireNonNull(logger, "logger");
         this.setPlaceholders = setPlaceholders;
     }
@@ -39,6 +39,15 @@ public final class PlaceholderBridge {
             Method method = api.getMethod("setPlaceholders", OfflinePlayer.class, String.class);
             return new PlaceholderBridge(logger, method);
         } catch (ClassNotFoundException | NoSuchMethodException exception) {
+            return new PlaceholderBridge(logger, null);
+        } catch (RuntimeException | LinkageError failure) {
+            // A soft dependency is optional by definition: a half-installed or shaded
+            // PlaceholderAPI can make the class lookup fail with something other than
+            // ClassNotFoundException, and that must cost placeholders — not the whole plugin.
+            logger.log(
+                    Level.WARNING,
+                    "Cannot inspect PlaceholderAPI; continuing without placeholders",
+                    failure);
             return new PlaceholderBridge(logger, null);
         }
     }

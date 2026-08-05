@@ -30,7 +30,9 @@ public final class HudContextFactory {
                 Integer.toString(server.getOnlinePlayers().size()),
                 Integer.toString(server.getMaxPlayers()),
                 Integer.toString(player.getPing()),
-                balance.isPresent() ? NumberFormatter.compact(balance.getAsDouble()) : "—",
+                balance.isPresent()
+                        ? NumberFormatter.compact(balance.getAsDouble())
+                        : NumberFormatter.UNKNOWN,
                 Integer.toString(location.getBlockX()),
                 Integer.toString(location.getBlockY()),
                 Integer.toString(location.getBlockZ()));
