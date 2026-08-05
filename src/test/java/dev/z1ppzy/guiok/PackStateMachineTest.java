@@ -6,6 +6,7 @@
 package dev.z1ppzy.guiok;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,21 @@ class PackStateMachineTest {
 
         assertEquals(PackState.DISCARDED, state);
         assertTrue(state.failed());
+    }
+
+    /**
+     * Geyser answers a required pack with the full success sequence on the client's behalf, so
+     * a Bedrock player would otherwise be talked into the packed title their client cannot draw.
+     */
+    @Test
+    void aBedrockClientStaysBedrockWhateverTheStatusClaims() {
+        PackState state = PackState.BEDROCK;
+        for (PackSignal signal : PackSignal.values()) {
+            state = PackStateMachine.transition(state, signal);
+            assertEquals(PackState.BEDROCK, state, "flipped by " + signal);
+        }
+        assertFalse(state.usesPackedTitle());
+        assertFalse(state.failed(), "a client that cannot use packs has not failed at anything");
     }
 
     @Test

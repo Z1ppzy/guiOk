@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import org.mockbukkit.mockbukkit.exception.UnimplementedOperationException;
 import org.mockbukkit.mockbukkit.plugin.PluginMock;
 
 class ResourcePackServiceTest {
@@ -106,6 +107,51 @@ class ResourcePackServiceTest {
 
         assertEquals(PackState.DECLINED, service.state(player));
         assertEquals("GUI OK", title(player));
+    }
+
+    @Test
+    void neverOffersThePackToABedrockClient() {
+        PlayerMock player = addBedrockPlayer("Steve");
+        ResourcePackService service = service(packSettings(true));
+
+        startPastTheSidebar(service, player);
+
+        assertEquals(PackState.BEDROCK, service.state(player));
+        assertFalse(service.usesPackedTitle(player), "a Bedrock client cannot draw the glyph");
+    }
+
+    /**
+     * {@code wait-for-pack} waits for something that can never arrive on Bedrock, so honouring
+     * it there would cost the player their HUD for the session rather than for a moment. The
+     * state proves the order of the two branches: were the Bedrock one second, this would be
+     * REQUESTED and the player would be waiting.
+     */
+    @Test
+    void doesNotMakeABedrockClientWaitForAPackItCannotReceive() {
+        PlayerMock player = addBedrockPlayer("Steve");
+        ResourcePackService service = service(packSettings(true), sidebarSettings(true, true));
+
+        startPastTheSidebar(service, player);
+
+        assertEquals(PackState.BEDROCK, service.state(player));
+    }
+
+    /**
+     * Geyser answers a required pack with the whole success sequence on the client's behalf so
+     * the server does not kick it. That invented success must not reach the sidebar.
+     */
+    @Test
+    void ignoresASuccessGeyserInventedForABedrockClient() {
+        PlayerMock player = addBedrockPlayer("Steve");
+        ResourcePackService service = service(packSettings(true));
+        startPastTheSidebar(service, player);
+
+        apply(service, player, ResourcePackStatus.ACCEPTED);
+        apply(service, player, ResourcePackStatus.DOWNLOADED);
+        apply(service, player, ResourcePackStatus.SUCCESSFULLY_LOADED);
+
+        assertEquals(PackState.BEDROCK, service.state(player));
+        assertFalse(service.usesPackedTitle(player));
     }
 
     @Test
@@ -215,8 +261,41 @@ class ResourcePackServiceTest {
     }
 
     private ResourcePackService service(PluginSettings.ResourcePackSettings packSettings) {
+        return service(packSettings, sidebarSettings(true, true));
+    }
+
+    private ResourcePackService service(
+            PluginSettings.ResourcePackSettings packSettings,
+            PluginSettings.SidebarSettings sidebarSettings) {
         return new ResourcePackService(
-                plugin, packSettings, sidebarSettings(true, true), new HudRenderer(), sidebar);
+                plugin,
+                packSettings,
+                sidebarSettings,
+                new HudRenderer(),
+                sidebar,
+                new BedrockPlayers(
+                        Logger.getLogger(ResourcePackServiceTest.class.getName()), null));
+    }
+
+    /** A player whose UUID has the shape Floodgate gives a Bedrock client. */
+    private PlayerMock addBedrockPlayer(String name) {
+        PlayerMock player = new PlayerMock(server, name, new UUID(0, 2535428371852800L));
+        server.addPlayer(player);
+        return player;
+    }
+
+    /**
+     * Starts the service and stops where MockBukkit does. {@code Objective#numberFormat} is
+     * unimplemented in the mock, so raising a sidebar aborts the test as skipped — which is
+     * why most of this class never runs. The pack decision under test here is already made by
+     * then, so the assertions after this call are about state the mock cannot take away.
+     */
+    private static void startPastTheSidebar(ResourcePackService service, PlayerMock player) {
+        try {
+            service.start(player);
+        } catch (UnimplementedOperationException unsupportedByTheMock) {
+            // Deliberately swallowed; SidebarServiceTest owns what the sidebar then shows.
+        }
     }
 
     private static PluginSettings.ResourcePackSettings packSettings(boolean enabled) {
