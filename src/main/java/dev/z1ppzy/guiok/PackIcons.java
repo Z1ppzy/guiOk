@@ -7,9 +7,12 @@ package dev.z1ppzy.guiok;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Single source of truth for the PNG glyphs shipped by the GuiOk resource pack. The same
@@ -27,6 +30,7 @@ import java.util.Set;
  */
 public final class PackIcons {
     private static final String PLACEHOLDER_PREFIX = "icon_";
+    private static final Pattern ICON_TAG = Pattern.compile("<icon(?::([^<>]*))?>");
     private static final Map<String, String> GLYPHS = glyphs();
 
     private PackIcons() {
@@ -53,7 +57,24 @@ public final class PackIcons {
 
     /** Returns the glyph for an icon name, or {@code null} when the name is unknown. */
     public static String glyph(String name) {
-        return GLYPHS.get(name.toLowerCase(Locale.ROOT));
+        return name == null ? null : GLYPHS.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * Returns the icon names a MiniMessage template references through {@code <icon:name>} that
+     * this pack cannot render. MiniMessage swallows the error raised by an unknown icon and
+     * prints the raw tag instead, so a typo would otherwise reach players unnoticed.
+     */
+    public static Set<String> unknownIconNames(String template) {
+        Set<String> unknown = new LinkedHashSet<>();
+        Matcher matcher = ICON_TAG.matcher(template);
+        while (matcher.find()) {
+            String name = matcher.group(1) == null ? "" : matcher.group(1);
+            if (glyph(name) == null) {
+                unknown.add(name);
+            }
+        }
+        return unknown;
     }
 
     /**
@@ -61,6 +82,9 @@ public final class PackIcons {
      * when the parameter is not an icon request or names an unknown icon.
      */
     public static String placeholderGlyph(String parameters) {
+        if (parameters == null) {
+            return null;
+        }
         String normalized = parameters.toLowerCase(Locale.ROOT);
         if (!normalized.startsWith(PLACEHOLDER_PREFIX)) {
             return null;

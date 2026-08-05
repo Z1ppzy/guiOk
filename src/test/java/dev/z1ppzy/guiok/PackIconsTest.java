@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class PackIconsTest {
@@ -68,6 +69,49 @@ class PackIconsTest {
         for (String name : PackIcons.names()) {
             assertEquals(PackIcons.glyph(name), PackIcons.placeholderGlyph("icon_" + name));
             assertTrue(PackIcons.glyph(name).codePointAt(0) >= 0xe000);
+        }
+    }
+
+    @Test
+    void toleratesNullFromExternalCallers() {
+        assertNull(PackIcons.glyph(null));
+        assertNull(PackIcons.placeholderGlyph(null));
+    }
+
+    @Test
+    void treatsIconNamesCaseInsensitively() {
+        assertEquals(PackIcons.glyph("coin"), PackIcons.glyph("COIN"));
+        assertEquals(PackIcons.glyph("coin"), PackIcons.glyph("Coin"));
+    }
+
+    @Test
+    void findsUnknownIconTagsInATemplate() {
+        assertEquals(Set.of(), PackIcons.unknownIconNames("<gray>Баланс:</gray> <icon:coin>"));
+        assertEquals(Set.of(), PackIcons.unknownIconNames("<icon:COIN><icon:logo>"));
+        assertEquals(Set.of("coins"), PackIcons.unknownIconNames("<balance><icon:coins>"));
+        assertEquals(
+                Set.of("coins", "teapot"),
+                PackIcons.unknownIconNames("<icon:coins> and <icon:teapot> and <icon:logo>"));
+    }
+
+    /** {@code <icon>} without a name is just as broken as a misspelt name. */
+    @Test
+    void treatsAnIconTagWithoutANameAsUnknown() {
+        assertEquals(Set.of(""), PackIcons.unknownIconNames("<icon>"));
+    }
+
+    @Test
+    void ignoresTagsThatMerelyLookLikeIcons() {
+        assertEquals(Set.of(), PackIcons.unknownIconNames("<font:guiok:hud>x</font>"));
+        assertEquals(Set.of(), PackIcons.unknownIconNames("<iconic>x</iconic>"));
+        assertEquals(Set.of(), PackIcons.unknownIconNames("plain text with no tags"));
+        assertEquals(Set.of(), PackIcons.unknownIconNames(""));
+    }
+
+    @Test
+    void everyShippedIconPassesTemplateValidation() {
+        for (String name : PackIcons.names()) {
+            assertEquals(Set.of(), PackIcons.unknownIconNames("<icon:" + name + ">"));
         }
     }
 }

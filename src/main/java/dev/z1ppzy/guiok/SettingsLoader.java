@@ -9,10 +9,20 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public final class SettingsLoader {
+    /**
+     * Protocol ceiling for the pack URL. Deliberately not the 255 characters the legacy
+     * {@code Player#setResourcePack(String)} documents: GuiOk pushes packs through Adventure's
+     * {@code sendResourcePacks}, and a pre-signed S3 or CDN link — the normal way to host a
+     * private pack — carries enough query string to sail past 255 while working perfectly.
+     */
+    private static final int MAX_URL_LENGTH = 32_767;
+
     private SettingsLoader() {
     }
 
@@ -39,7 +49,13 @@ public final class SettingsLoader {
             if (lines.get(index) == null || lines.get(index).length() > 2048) {
                 throw new ConfigException("sidebar.lines[" + index + "] is invalid or longer than 2048 chars");
             }
+            requireKnownIcons(lines.get(index), "sidebar.lines[" + index + ']');
         }
+
+        String packedTitle = required(config, "sidebar.title-with-pack");
+        String fallbackTitle = required(config, "sidebar.title-without-pack");
+        requireKnownIcons(packedTitle, "sidebar.title-with-pack");
+        requireKnownIcons(fallbackTitle, "sidebar.title-without-pack");
 
         PluginSettings.ResourcePackSettings resourcePack =
                 new PluginSettings.ResourcePackSettings(
@@ -59,8 +75,8 @@ public final class SettingsLoader {
                 config.getBoolean("sidebar.fallback-on-pack-failure", true),
                 config.getBoolean("sidebar.replace-existing-scoreboard", true),
                 boundedLong(config, "sidebar.refresh-ticks", 10, 1200),
-                required(config, "sidebar.title-with-pack"),
-                required(config, "sidebar.title-without-pack"),
+                packedTitle,
+                fallbackTitle,
                 lines);
 
         PluginSettings.MessageSettings messages = new PluginSettings.MessageSettings(
@@ -72,6 +88,14 @@ public final class SettingsLoader {
                 required(config, "messages.pack-resent"));
 
         return new PluginSettings(resourcePack, sidebar, messages);
+    }
+
+    private static void requireKnownIcons(String template, String path) throws ConfigException {
+        Set<String> unknown = PackIcons.unknownIconNames(template);
+        if (!unknown.isEmpty()) {
+            throw new ConfigException(path + " references unknown GuiOk icons "
+                    + unknown + "; available: " + new TreeSet<>(PackIcons.names()));
+        }
     }
 
     private static String required(FileConfiguration config, String path) throws ConfigException {
@@ -95,12 +119,20 @@ public final class SettingsLoader {
     }
 
     private static URI uri(String raw, String path) throws ConfigException {
+        if (raw.length() > MAX_URL_LENGTH) {
+            throw new ConfigException(
+                    path + " must be at most " + MAX_URL_LENGTH + " characters");
+        }
         try {
             URI uri = new URI(raw);
             if (!uri.isAbsolute()
                     || !(uri.getScheme().equalsIgnoreCase("https")
                     || uri.getScheme().equalsIgnoreCase("http"))) {
                 throw new ConfigException(path + " must be an absolute HTTP(S) URL");
+            }
+            if (uri.getHost() == null || uri.getHost().isBlank()) {
+                throw new ConfigException(
+                        path + " must name a host, such as https://example.com/pack.zip");
             }
             if (!raw.chars().allMatch(character -> character <= 0x7f)) {
                 throw new ConfigException(path + " must contain only ASCII characters; URL-encode it first");
