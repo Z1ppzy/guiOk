@@ -32,6 +32,7 @@ public class GuiOkPlugin extends JavaPlugin {
     private BuildInfo buildInfo;
     private PluginSettings settings;
     private PlaceholderBridge placeholders;
+    private BedrockPlayers bedrock;
     private GuiOkItemService items;
     private SidebarService sidebar;
     private ResourcePackService resourcePacks;
@@ -54,6 +55,7 @@ public class GuiOkPlugin extends JavaPlugin {
         }
 
         placeholders = PlaceholderBridge.discover(getLogger(), getClassLoader());
+        bedrock = BedrockPlayers.discover(getLogger(), getClassLoader());
         items = new GuiOkItemService(this, itemCatalog);
         getServer().getServicesManager().register(
                 GuiOkApi.class, items, this, ServicePriority.Normal);
@@ -65,7 +67,7 @@ public class GuiOkPlugin extends JavaPlugin {
                 new HudContextFactory(getServer()),
                 placeholders);
         resourcePacks = new ResourcePackService(
-                this, settings.resourcePack(), settings.sidebar(), renderer, sidebar);
+                this, settings.resourcePack(), settings.sidebar(), renderer, sidebar, bedrock);
         getServer().getPluginManager().registerEvents(resourcePacks, this);
 
         GuiOkCommand commandHandler = new GuiOkCommand(this);
@@ -96,7 +98,8 @@ public class GuiOkPlugin extends JavaPlugin {
                 + ", commit=" + buildInfo.commit()
                 + ", packSha1=" + buildInfo.resourcePackSha1()
                 + ", customItems=" + items.itemIds().size()
-                + ", PlaceholderAPI=" + placeholders.available());
+                + ", PlaceholderAPI=" + placeholders.available()
+                + ", bedrockVia=" + bedrock.source());
     }
 
     @Override
@@ -161,6 +164,10 @@ public class GuiOkPlugin extends JavaPlugin {
 
     public PlaceholderBridge placeholders() {
         return placeholders;
+    }
+
+    public BedrockPlayers bedrockPlayers() {
+        return bedrock;
     }
 
     public GuiOkItemService items() {

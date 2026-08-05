@@ -6,7 +6,10 @@ description: GuiOk by Z1ppzy — resource-pack HUD and namespaced custom item AP
 authors: [Z1ppzy]
 website: https://github.com/Z1ppzy/guiOk
 api-version: '26.1.2'
-softdepend: [PlaceholderAPI]
+# floodgate and Geyser-Spigot are listed so they finish enabling before GuiOk asks either of
+# them whether a joining player is on Bedrock; neither is required, and a server without them
+# falls back to recognising Floodgate's UUID shape.
+softdepend: [PlaceholderAPI, floodgate, Geyser-Spigot]
 commands:
   guiok:
     description: GuiOk HUD, custom items, diagnostics and resource-pack controls

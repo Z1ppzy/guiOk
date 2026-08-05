@@ -14,7 +14,13 @@ public enum PackState {
     DECLINED,
     FAILED,
     DISCARDED,
-    DISABLED;
+    DISABLED,
+    /**
+     * A Bedrock client, which is never sent the pack at all: it could not render a Java pack
+     * even if it accepted one. Not a failure — the player has the text HUD, which is the best
+     * their client can show — so nothing about it is worth reporting as broken.
+     */
+    BEDROCK;
 
     public boolean usesPackedTitle() {
         return this == APPLIED;

@@ -10,7 +10,9 @@ public final class PackStateMachine {
     }
 
     public static PackState transition(PackState current, PackSignal signal) {
-        if (current == PackState.DECLINED || current == PackState.FAILED) {
+        if (current == PackState.DECLINED
+                || current == PackState.FAILED
+                || current == PackState.BEDROCK) {
             return current;
         }
         if (current == PackState.APPLIED && signal != PackSignal.DISCARDED) {

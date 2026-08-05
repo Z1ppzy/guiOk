@@ -28,6 +28,7 @@ public final class ResourcePackService implements Listener {
     private final JavaPlugin plugin;
     private final HudRenderer renderer;
     private final SidebarService sidebar;
+    private final BedrockPlayers bedrock;
     /** Read from PlaceholderAPI requests, which other plugins may issue off the main thread. */
     private final Map<UUID, PackState> states = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> pending = new HashMap<>();
@@ -47,12 +48,14 @@ public final class ResourcePackService implements Listener {
             PluginSettings.ResourcePackSettings packSettings,
             PluginSettings.SidebarSettings sidebarSettings,
             HudRenderer renderer,
-            SidebarService sidebar) {
+            SidebarService sidebar,
+            BedrockPlayers bedrock) {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
         this.packSettings = Objects.requireNonNull(packSettings, "packSettings");
         this.sidebarSettings = Objects.requireNonNull(sidebarSettings, "sidebarSettings");
         this.renderer = Objects.requireNonNull(renderer, "renderer");
         this.sidebar = Objects.requireNonNull(sidebar, "sidebar");
+        this.bedrock = Objects.requireNonNull(bedrock, "bedrock");
     }
 
     @EventHandler
@@ -120,6 +123,16 @@ public final class ResourcePackService implements Listener {
             previous.cancel();
         }
         int generation = supersede(playerId);
+
+        // A Bedrock client cannot render a Java pack, and Geyser answers the request on its
+        // behalf — with a lie when the pack is required — so asking is worse than useless.
+        // The text HUD goes up immediately: waiting for a pack that can never arrive would
+        // leave a player who did nothing wrong staring at an empty screen for the session.
+        if (bedrock.isBedrock(player)) {
+            states.put(playerId, PackState.BEDROCK);
+            sidebar.present(player, false);
+            return;
+        }
 
         if (!packSettings.enabled() || !packSettings.sendOnJoin()) {
             states.put(playerId, PackState.DISABLED);
