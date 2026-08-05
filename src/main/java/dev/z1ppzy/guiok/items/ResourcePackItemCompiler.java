@@ -44,6 +44,8 @@ public final class ResourcePackItemCompiler {
             config.load(configFile.toFile());
         } catch (InvalidConfigurationException exception) {
             throw new ConfigException("items.yml is invalid YAML: " + exception.getMessage());
+        } catch (RuntimeException exception) {
+            throw new ConfigException("items.yml cannot be parsed: " + exception.getMessage());
         }
 
         ItemCatalog catalog = ItemConfigLoader.load(config);

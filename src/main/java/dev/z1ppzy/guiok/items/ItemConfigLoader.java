@@ -48,6 +48,11 @@ public final class ItemConfigLoader {
             throw new ConfigException("Cannot read items.yml: " + exception.getMessage());
         } catch (InvalidConfigurationException exception) {
             throw new ConfigException("items.yml is invalid YAML: " + exception.getMessage());
+        } catch (RuntimeException exception) {
+            // Bukkit splits keys on '.', so a key such as "..:coin" fails while building the
+            // node tree. Without this the plugin would abort onEnable with a raw stack trace
+            // instead of the configuration-error path.
+            throw new ConfigException("items.yml cannot be parsed: " + exception.getMessage());
         }
         return loadForServer(config);
     }
@@ -149,7 +154,9 @@ public final class ItemConfigLoader {
             throw new ConfigException(path + " must be a lowercase namespaced id such as prison:token");
         }
         NamespacedKey key = NamespacedKey.fromString(raw);
-        if (key == null || unsafePath(key.getKey())) {
+        // A namespace may legally contain dots, so "..:coin" survives NamespacedKey and would
+        // walk the generated pack one directory up — check it exactly like the key path.
+        if (key == null || unsafePath(key.getNamespace()) || unsafePath(key.getKey())) {
             throw new ConfigException(path + " is not a safe Minecraft resource location");
         }
         return key;
