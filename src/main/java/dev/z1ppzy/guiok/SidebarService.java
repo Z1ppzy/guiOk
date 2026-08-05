@@ -171,29 +171,28 @@ public final class SidebarService {
 
     private void refresh(Player player, Session session) {
         HudContext context = contextFactory.create(player);
-        String titleTemplate = session.packedTitle()
-                ? settings.packedTitle()
-                : settings.fallbackTitle();
-        Component title = renderer.render(
-                titleTemplate,
+        HudRenderer.Refresh scope = renderer.beginRefresh(
                 context,
                 identifier -> placeholders.resolve(player, identifier),
                 session.packedTitle());
+
+        String titleTemplate = session.packedTitle()
+                ? settings.packedTitle()
+                : settings.fallbackTitle();
+        Component title = scope.render(titleTemplate);
         if (session.updateTitle(title)) {
             session.objective().displayName(title);
         }
+
         int count = Math.min(session.teams().size(), settings.lines().size());
         for (int index = 0; index < count; index++) {
-            Component line = renderer.render(
-                    settings.lines().get(index),
-                    context,
-                    identifier -> placeholders.resolve(player, identifier),
-                    session.packedTitle());
+            Component line = scope.render(settings.lines().get(index));
             if (session.updateLine(index, line)) {
                 session.teams().get(index).prefix(line);
             }
         }
     }
+
 
     private static String uniqueEntry(int index) {
         return "\u00a7" + Integer.toHexString(index);
