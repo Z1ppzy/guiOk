@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Bedrock-игроки через Geyser/Floodgate больше не получают запрос ресурспака и
+  сразу видят текстовый HUD. Java-пак Bedrock-клиенту всё равно не помог бы —
+  Geyser их не конвертирует, — а поверить клиенту нельзя: Geyser отвечает на
+  запрос за него и на `required: true` рапортует ACCEPTED, DOWNLOADED и
+  SUCCESSFULLY_LOADED, чтобы его не кикнули. Плагин раньше принял бы это за
+  успех и нарисовал бы приватный код-поинт в шрифте, которого у клиента нет.
+  Решение принимается до отправки запроса, поэтому `required` теперь безопасно
+  в любом значении.
+- Bedrock определяется через Floodgate, при его отсутствии через Geyser, а если
+  оба живут на прокси — по форме UUID, который Floodgate собирает из одного
+  Xbox ID и оставляет старшую половину нулевой. Источник виден в `/guiok status`
+  и в строке лога при старте; ни один из плагинов не является зависимостью.
+- Новое состояние пака `BEDROCK` в `/guiok status`, и оно необратимо: поздний
+  статус не может превратить его в `APPLIED`.
+
 - **Breaking.** Removed the Vault dependency and the built-in `<balance>` tag. Vault
   reached exactly one value — the balance on the sidebar — while costing a soft
   dependency, service discovery, a TTL cache and its own failure handling, and it

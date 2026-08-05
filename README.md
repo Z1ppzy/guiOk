@@ -300,6 +300,37 @@ tagprefix: "%guiok_icon_crown% "
 - Если другой пак уже использует namespace `guiok`, объедините паки или смените
   namespace одновременно в font JSON и `title-with-pack`.
 
+## Bedrock-игроки (Geyser + Floodgate)
+
+Плагин совместим с Floodgate и ничего не требует настраивать: Bedrock-игрок
+опознаётся при входе и получает текстовый HUD, а пак ему не отправляется вовсе.
+
+Так сделано потому, что Java-пак Bedrock-клиенту не поможет — Geyser не
+конвертирует паки — а самому клиенту доверять нельзя: Geyser отвечает на запрос
+пака за него и на `required: true` рапортует «успешно загружен», чтобы его не
+кикнули. Плагин на эту ложь не полагается и решает до отправки запроса, поэтому
+`required` можно оставлять в любом значении.
+
+Кто отвечает на вопрос «это Bedrock?» — видно в `/guiok status` и в строке лога
+при старте:
+
+| Источник | Когда используется |
+| --- | --- |
+| `Floodgate` | Floodgate стоит на этом сервере; единственный, кто распознаёт привязанный Java-аккаунт |
+| `Geyser` | Geyser-Spigot без Floodgate |
+| `UUID` | Geyser и Floodgate живут на прокси, сюда приходит только профиль. Floodgate собирает UUID из одного Xbox ID, старшая половина остаётся нулевой — у Java-игрока такого не бывает |
+
+Что Bedrock-игрок увидит иначе, и это не лечится со стороны плагина:
+
+- цифры счёта в sidebar видны (Bedrock всегда их рисует, а `NumberFormat.blank()`
+  Geyser не транслирует);
+- градиенты и hex огрубляются до ближайшего из 16 цветов Bedrock;
+- логотипа, монетки, отступов и темы ESC-меню нет — это Java-пак;
+- кастомные предметы приходят с текстурой базового материала. Имя, лор, PDC-id и
+  весь `GuiOkApi` работают одинаково, так что логика плагинов не ломается; для
+  настоящих текстур нужен Geyser custom-item mapping и отдельный Bedrock-пак;
+- `/guiok give` требует ник с префиксом Floodgate (по умолчанию `.Ник`).
+
 ## Команды
 
 | Команда | Назначение | Право |
@@ -307,7 +338,7 @@ tagprefix: "%guiok_icon_crown% "
 | `/guiok toggle` | скрыть/вернуть sidebar | `guiok.use` |
 | `/guiok resend` | повторно отправить пак | `guiok.use` |
 | `/guiok version` | JAR, git-коммит, дата, Paper API, SHA-1 | `guiok.use` |
-| `/guiok status` | pack state, sidebar и PlaceholderAPI | `guiok.use` |
+| `/guiok status` | pack state, тип клиента, sidebar и PlaceholderAPI | `guiok.use` |
 | `/guiok items` | список зарегистрированных item ID | `guiok.admin` |
 | `/guiok icons` | глифы пака, их символы и плейсхолдеры | `guiok.admin` |
 | `/guiok give <игрок> <id> [количество]` | выдать кастомный предмет | `guiok.admin` |
