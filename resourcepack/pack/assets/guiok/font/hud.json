@@ -127,6 +127,15 @@
       ]
     },
     {
+      "type": "bitmap",
+      "file": "guiok:font/icons/chapter_plate.png",
+      "ascent": 20,
+      "height": 32,
+      "chars": [
+        "\ue221"
+      ]
+    },
+    {
       "type": "space",
       "advances": {
         "\ue300": 1,
